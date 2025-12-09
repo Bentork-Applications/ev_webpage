@@ -1,0 +1,20 @@
+.splash-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #ffffff;
+}
+
+.splash-logo {
+  width: 120px;
+  margin-bottom: 24px;
+}
+
+md-linear-progress {
+  width: 200px;
+  height: 6px;
+  --md-linear-progress-active-indicator-color: #00a651;
+  --md-linear-progress-track-color: #e0e0e0;
+}
