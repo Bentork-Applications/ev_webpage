@@ -2,18 +2,25 @@ import React, { useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { useAuth } from "../store/AuthContext"
 import PaymentService from "../services/payment.service"
-
+import APP_CONFIG from "../config/app.config"
+import AuthService from "../services/auth.service"
+import Download from "../assets/images/Terms.svg";
+import Terms from "../assets/images/energy.svg";
+import Privacy from "../assets/images/Privacy.svg";
+import About from "../assets/images/About.svg";
 export default function Dashboard() {
 
   const navigate = useNavigate()
-  const { user, transactionData } = useAuth()
+  const { user, transactionData, userByEmail, transactionHistory } = useAuth()
 
   const [transactions, setTransactions] = useState([])
   const [showDialog, setShowDialog] = useState(false)
   const [amount, setAmount] = useState("")
+  const [totalAmount, setTotalAmount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
+  const [isVerifying, setIsVerifying] = useState(false)
 
   useEffect(() => {
     if (!user) {
@@ -22,22 +29,34 @@ export default function Dashboard() {
     }
 
     if (Array.isArray(transactionData)) {
-      setTransactions(transactionData)
+      setTransactions(transactionData);
     }
   }, [user, transactionData, navigate])
 
+  useEffect(() => {
+    const baseAmount = parseFloat(amount) || 0
+
+    if(baseAmount > 0){
+      const gst = baseAmount * (APP_CONFIG.TAX.GST_RATE || 0)
+      const pst = baseAmount * (APP_CONFIG.TAX.SXT_RATE || 0)
+      setTotalAmount((baseAmount + gst + pst).toFixed(2));
+    } else {
+      setTotalAmount(0);
+    }
+  }, [amount]);
+
 
   const handleRecharge = async () => {
-    if (!amount || amount <= 0) {
-      setError("Enter valid amount")
+    if (!totalAmount || totalAmount <= 0) {
+      setError("Enter valid amount");
       return
     }
 
-    setLoading(true)
-    setError("")
+    setLoading(true);
+    setError("");
 
     try {
-      const orderResult = await PaymentService.createOrder(amount)
+      const orderResult = await PaymentService.createOrder(totalAmount)
 
       PaymentService.processPayment(
         orderResult,
@@ -47,26 +66,55 @@ export default function Dashboard() {
       )
 
     } catch (error) {
-      setError("Recharge failed")
-      setLoading(false)
+      setError("Recharge failed");
+      setLoading(false);
     }
   }
 
   const handleSuccess = () => {
-    setSuccess("Payment Successful")
-    setLoading(false)
-
-    setTimeout(() => {
-      setShowDialog(false)
-      setSuccess("")
-      setAmount("")
-      window.location.reload()
-    }, 1500)
+    setSuccess("Payment Successful");
+    setLoading(false);
+    setIsVerifying(true);
+    reloadData();
   }
 
   const handleFailure = (err) => {
-    setError(err || "Failed")
-    setLoading(false)
+    setError(err || "Payment Failed");
+    setLoading(false);
+    setIsVerifying(false);
+  }
+
+  const reloadData = async () => {
+    try{
+      console.info('First')
+      const userReload = await userByEmail(user.email)
+      console.debug('Second')
+      if(!userReload.success && !userReload.updatedUser) {
+        setError('Failed to fetch User')
+        return
+      }
+      console.debug('third')
+
+      const transactionReload  = await AuthService.loadTransaction(user.id, 10);
+      setTransactions(transactionReload);
+      transactionHistory(transactionReload);
+
+      setTimeout(() => {
+        setSuccess("Verification Completed");
+        setTimeout(() => {
+          setShowDialog(false);
+          setSuccess("");
+          setAmount("");
+          setError("");
+          setIsVerifying(false);
+        }, 500)
+      }, 1000)
+      
+    } catch (error){
+      setError("Failed while loading user or while loading transaction");
+      setIsVerifying(false);
+      setLoading(false)
+    }
   }
 
 
@@ -185,11 +233,30 @@ export default function Dashboard() {
           width:100%;
           padding:10px;
           margin-top:10px;
+          margin-bottom:10px;
           border-radius:8px;
           border:1px solid #ccc;
         }
+        .loading-bar-container{
+          width:100%;
+          background-color:#f3f3f3;
+          border-redius:4px;
+          overflow:hidden;
+          margin-top:15px;
+        }
+        .loading-bar {
+          height: 8px;
+          width: 100%; /* Start at 0, animation will change this */
+          background-color: #4CAF50;
+          animation: progress-bar 2s infinite linear;
+        }
+        @keyframes progress-bar {
+          0% { transform: translateX(-100%) }
+          100% { transform: translateX(100%) }
+        }
         .error{color:red;margin-top:10px}
         .success{color:green;margin-top:10px}
+        .spacing{font-size:0.7rem;margin-bottom:16px}
       `}</style>
 
       {/* TITLE */}
@@ -209,7 +276,6 @@ export default function Dashboard() {
             </div>
           ))}
         </div> */}
-
 <div className="menu">
   {[
     {
@@ -248,7 +314,7 @@ export default function Dashboard() {
           <line x1="12" y1="8" x2="12.01" y2="8" />
         </svg>
       )
-    },
+    }
   ].map((item, k) => (
     <div key={k}>
       <div className="circle">{item.icon}</div>
@@ -256,6 +322,7 @@ export default function Dashboard() {
     </div>
   ))}
 </div>
+
 
 
 
@@ -269,7 +336,7 @@ export default function Dashboard() {
           {/* <b>Wallet Balance</b> */}
           <button className="btn" onClick={()=>setShowDialog(true)}>Add balance</button>
         </div>
-        <div className="amount">₹ {user?.walletBalance || 0.00}</div>
+        <div className="amount">₹ {user?.walletBalance || 0}</div>
         <small>Available for charging</small>
       </div>
 
@@ -300,24 +367,46 @@ export default function Dashboard() {
           <div className="dialog">
             <h3>Recharge Wallet</h3>
 
-            {error && <p className="error">{error}</p>}
-            {success && <p className="success">{success}</p>}
+            {isVerifying ? (
+              <div style={{ textAlign: 'center', padding: '30px 0' }}>
+                <h4 style={{ color: 'green' }}>{success || "Verifying Payment..."}</h4>
+                <p>Please wait, updating your wallet balance.</p>
+                <div className="loading-bar-container">
+                    <div className="loading-bar"></div>
+                </div>
+              </div>
 
-            <input
-              type="number"
-              placeholder="Enter amount"
-              value={amount}
-              onChange={(e)=>setAmount(e.target.value)}
-            />
+            ) : (
+              <>
+                {error && <p className="error">{error}</p>}
+                {success && <p className="success">{success}</p>}
 
-            <br/><br/>
+                <input
+                  type="number"
+                  placeholder="Enter amount"
+                  value={amount}
+                  onChange={(e)=>{
+                    setAmount(e.target.value)
+                    setError("")
+                  }}
+                  disabled={loading}
+                />
 
-            <button className="btn" onClick={handleRecharge}>
-              {loading ? "Processing..." : `Pay ₹${amount || 0}`}
-            </button>
-            <button style={{marginLeft:10}} onClick={()=>setShowDialog(false)}>
-              Cancel
-            </button>
+                <p className="spacing">This will also include GST(18%) and PST(18%) of the Amount </p>
+
+                <button className="btn" onClick={handleRecharge} disabled={loading || parseFloat(totalAmount) <= 0}>
+                  {loading ? "Processing..." : `Pay ₹${totalAmount || 0}`}
+                </button>
+                <button style={{marginLeft:10}} 
+                  onClick={()=> {
+                    if(!loading)setShowDialog(false)
+                    }}
+                  disabled={loading}  
+                >
+                  Cancel
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

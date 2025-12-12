@@ -199,7 +199,7 @@ import APP_CONFIG from "../config/app.config"
 
 const Receipt = () => {
   const navigate = useNavigate()
-  const { user = {}, chargerData } = useAuth()
+  const { user, chargerData } = useAuth()
 
   const [selectedPlan, setSelectedPlan] = useState(null)
   const [paymentDetails, setPaymentDetails] = useState(null)
@@ -221,9 +221,9 @@ const Receipt = () => {
   // Dynamically calculate payment based on plan kWh, price, taxes
   const calculatePayment = (plan) => {
     const basePrice = parseFloat(plan.walletDeduction ?? plan.price ?? 0) || 0
-    const gst = basePrice * (APP_CONFIG.TAX?.GST_RATE ?? 0)
-    const sxt = basePrice * (APP_CONFIG.TAX?.SXT_RATE ?? 0)
-    const total = basePrice + gst + sxt
+    // const gst = basePrice * (APP_CONFIG.TAX?.GST_RATE ?? 0)
+    // const sxt = basePrice * (APP_CONFIG.TAX?.SXT_RATE ?? 0)
+    const total = basePrice
 
     setPaymentDetails({
       balance: parseFloat(user.walletBalance ?? 0).toFixed(2),
