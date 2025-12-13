@@ -79,7 +79,7 @@ class PaymentService {
     }
     
     const options = {
-      key: RAZORPAY_KEY_ID || process.env.RAZORPAY_KEY_ID || import.meta.env?.RAZORPAY_KEY_ID,
+      key: import.meta.env?.RAZORPAY_KEY_ID,
       amount: orderData.amount,
       currency: orderData.currency,
       order_id: orderData.orderId,
