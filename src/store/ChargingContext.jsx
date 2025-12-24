@@ -123,10 +123,7 @@ export const ChargingProvider = ({ children }) => {
             return { success: false}
         }
 
-        if (!isChargerUnavailable) {
-            setError('Charger is unavailable')
-            return { success: false}
-        }
+       
 
         setLoading(true)
         setError('')
@@ -136,7 +133,17 @@ export const ChargingProvider = ({ children }) => {
                 walletDeduction : Number(pricing.formattedTotalAmount)
             }
             CacheService.savePlanData(updatedPlan)
-
+            const chargerResponse = await ApiService.get(
+                        API_CONFIG.ENDPOINTS.GET_CHARGER(ocppId))
+            console.info('Charger Data:', chargerResponse)
+            updateChargerData(chargerResponse)
+            console.log('ischargerunavailable: ',isChargerUnavailable)
+            console.log('charger data 2: ',chargerData)
+            
+            if (isChargerUnavailable) {
+                setError('Charger is unavailable')
+                return { success: false}
+            }
             const result = await SessionService.startSession(
                 chargerData?.id,
                 selectedPlan?.id,
