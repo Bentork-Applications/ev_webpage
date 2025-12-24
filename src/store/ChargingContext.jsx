@@ -20,7 +20,7 @@ export const useCharging = () => {
 export const ChargingProvider = ({ children }) => {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user, chargerData, updatedWalletBalance} = useAuth()
+    const { user, chargerData, updatedWalletBalance, updateChargerData} = useAuth()
 
     const [plans, setPlans] = useState([])
     const [selectedPlan, setSelectedPlan] = useState(null)
@@ -122,8 +122,6 @@ export const ChargingProvider = ({ children }) => {
             setError('Insufficient wallet balance')
             return { success: false}
         }
-
-       
 
         setLoading(true)
         setError('')
