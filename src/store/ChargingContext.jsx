@@ -134,7 +134,7 @@ export const ChargingProvider = ({ children }) => {
             }
             CacheService.savePlanData(updatedPlan)
             const chargerResponse = await ApiService.get(
-                        API_CONFIG.ENDPOINTS.GET_CHARGER(ocppId))
+                        API_CONFIG.ENDPOINTS.GET_CHARGER(chargerData?.ocppId))
             console.info('Charger Data:', chargerResponse)
             updateChargerData(chargerResponse)
             console.log('ischargerunavailable: ',isChargerUnavailable)
