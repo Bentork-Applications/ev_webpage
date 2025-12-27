@@ -1,457 +1,433 @@
-// import React, { useEffect, useState } from 'react'
-// import { useNavigate } from 'react-router-dom'
-// import {
-//   Container,
-//   Paper,
-//   Typography,
-//   CircularProgress,
-//   Alert,
-//   Box,
-//   Button,
-//   Table,
-//   TableBody,
-//   TableCell,
-//   TableRow,
-//   Divider
-// } from '@mui/material'
-// import {
-//   CheckCircle,
-//   Logout
-// } from '@mui/icons-material'
-// import { useAuth } from '../store/AuthContext'
-// import CacheService from '../services/cache.service'
-
-// const Invoice = () => {
-//   const navigate = useNavigate()
-//   const { user, chargerData, logout } = useAuth()
-//   const [sessionData, setSessionData] = useState(null)
-//   const [loading, setLoading] = useState(true)
-  
-//   useEffect(() => {
-//     const completion  = JSON.parse(sessionStorage.getItem('sessionCompletion') || '{}')
-//     if (completion) {
-//       try {
-//         const parsed = completion
-//         console.log('Parsed session completion data:', parsed)
-        
-//         const completionData = parsed.completionData || parsed
-//         setSessionData(completionData)
-        
-//         sessionStorage.removeItem('sessionCompletion')
-//         CacheService.clearPlanData()
-//         CacheService.clearSessionData()
-//       } catch (error) {
-//         console.error('Error parsing session data:', error)
-//         setSessionData(null)
-//       }
-//     } else {
-//       console.warn('No session completion data found')
-//       setSessionData(null)
-//     }
-    
-//     setLoading(false)
-//   }, [])
-  
-//   const handleOk = () => {
-//     navigate('/thank-you')
-//   }
-  
-//   // const handleLogout = () => {
-//   //   logout()
-//   // }
-
-//   if (loading) {
-//     return (
-//       <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
-//         <CircularProgress />
-//       </Box>
-//     )
-//   }
-  
-//   if (!sessionData) {
-//     return (
-//       <Container maxWidth="sm" sx={{ py: 4 }}>
-//         <Paper elevation={3} sx={{ p: 4 }}>
-//           <Alert severity="warning" sx={{ mb: 3 }}>
-//             No session data found. The session may have already been processed.
-//           </Alert>
-//           <Box display="flex" justifyContent="center">
-//             <Button variant="contained" onClick={() => navigate('/dashboard')}>
-//               Go to Dashboard
-//             </Button>
-//           </Box>
-//         </Paper>
-//       </Container>
-//     )
-//   }
-
-//   const planName = sessionData.plan?.planName || 'N/A'
-//   const energyUsed = sessionData.energyUsed ?? 0
-//   const duration = sessionData.duration ?? 0
-//   const rate = sessionData.plan?.rate ?? 0
-//   const finalCost = sessionData.finalCost ?? sessionData.amountDebited ?? (energyUsed * rate)
-//   const refundIssued = sessionData.refundIssued || false
-//   const extraDebited = sessionData.extraDebited || false
-  
-//   return (
-//     <Container maxWidth="sm" sx={{ py: 4 }}>
-//       <Paper elevation={3} sx={{ p: 4 }}>
-//         <Box display="flex" alignItems="center" justifyContent="center" mb={3}>
-//           <CheckCircle sx={{ fontSize: 60, color: 'success.main', mr: 2 }} />
-//           <Typography variant="h4">Charging Complete</Typography>
-//         </Box>
-
-//         {/* Status Messages */}
-//         {refundIssued && (
-//           <Alert severity="info" sx={{ mb: 2 }}>
-//             A refund has been issued for unused energy.
-//           </Alert>
-//         )}
-//         {extraDebited && (
-//           <Alert severity="warning" sx={{ mb: 2 }}>
-//             Extra amount was debited due to higher usage.
-//           </Alert>
-//         )}
-        
-//         <Typography variant="h6" gutterBottom>Invoice Details</Typography>
-        
-//         <Table size="small">
-//           <TableBody>
-//             <TableRow>
-//               <TableCell>User Name</TableCell>
-//               <TableCell align="right">{user?.name}</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Email</TableCell>
-//               <TableCell align="right">{user?.email}</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell colSpan={2}><Divider /></TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Charger Name</TableCell>
-//               <TableCell align="right">{chargerData?.stationId || chargerData?.name || 'N/A'}</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>OCPP ID</TableCell>
-//               <TableCell align="right">{chargerData?.ocppId || 'N/A'}</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Charger Type</TableCell>
-//               <TableCell align="right">{chargerData?.chargerType || 'N/A'}</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell colSpan={2}><Divider /></TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Plan</TableCell>
-//               <TableCell align="right">{planName}</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Energy Used</TableCell>
-//               <TableCell align="right">{energyUsed?.toFixed(2)} kWh</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Time Taken</TableCell>
-//               <TableCell align="right">{duration} minutes</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell>Rate</TableCell>
-//               <TableCell align="right">₹{rate}/kWh</TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell colSpan={2}><Divider /></TableCell>
-//             </TableRow>
-//             <TableRow>
-//               <TableCell><Typography variant="h6">Total Amount</Typography></TableCell>
-//               <TableCell align="right">
-//                 <Typography variant="h6">₹{Number(finalCost).toFixed(2)}</Typography>
-//               </TableCell>
-//             </TableRow>
-
-//             {sessionData.message && (
-//               <TableRow>
-//                 <TableCell colSpan={2}>
-//                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-//                     {sessionData.message}
-//                   </Typography>
-//                 </TableCell>
-//               </TableRow>
-//             )}
-
-//           </TableBody>
-//         </Table>
-        
-//         <Box display="flex" gap={2} justifyContent="center" mt={4}>
-//           <Button variant="contained" onClick={handleOk}>OK</Button>
-//         </Box>
-        
-//         <Box position="fixed" bottom={24} left={0} right={0} textAlign="center">
-//           <Button startIcon={<Logout />} color="error" onClick={logout}>
-//             Logout
-//           </Button>
-//         </Box>
-//       </Paper>
-//     </Container>
-//   )
-// }
-
-// export default Invoice 
-
-
-
-
-
-
-
-
-
-
-
-
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowBackIosNew,
-  NotificationsNoneOutlined,
-  CheckCircle,
-} from "@mui/icons-material";
+import { CheckCircle, Email, Download } from "@mui/icons-material";
+import { CircularProgress, Alert, Snackbar } from "@mui/material"
 import { useAuth } from "../store/AuthContext";
 import CacheService from "../services/cache.service";
+import EmailService from "../services/email.service"
+import SessionService from "../services/session.service"
 
 const Invoice = () => {
   const navigate = useNavigate();
   const { user, chargerData } = useAuth();
-
+  const emailSentRef = useRef(false)
   const [sessionData, setSessionData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true)
+  const [emailStatus, setEmailStatus] = useState({
+    sending: false,
+    sent: false,
+    error: null
+  })
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' })
 
-  const selectedPlanName = () => {
-    const plan = CacheService.getPlanData();
-    console.info('plan data: ',plan)
-    return plan.planName || 'N/A'
+  useEffect(() => {
+    loadSessionData()
+  }, [])
+
+  const loadSessionData = async () => {
+    try {
+      const stored = sessionStorage.getItem("sessionCompletion")
+      
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        const completionData = parsed.completionData || parsed
+
+        setSessionData(completionData)
+
+        sessionStorage.removeItem("sessionCompletion")
+        CacheService.clearPlanData()
+        SessionService.clearSession()
+
+        if (!emailSentRef.current && user?.email) {
+          emailSentRef.current = true
+          await sendInvoiceEmail(completionData)
+        }
+      } else {
+        console.warn("No session completion data found")
+      }
+    } catch (error) {
+      console.error("Error loading session data:", error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  const formatDuration = (mins) => {
-    const h = Math.floor(mins / 60);
-    const m = mins % 60;
-    return `${h}h ${m}m`;
-  };
+  const sendInvoiceEmail = async (data) => {
+    // setEmailStatus({ sending: true, sent: false, error: null })
 
-  useEffect(() => {
-    const data = JSON.parse(sessionStorage.getItem("sessionCompletion") || "{}");
+    try {
+      const invoiceData = {
+        userName: user?.name || 'Customer',
+        userEmail: user?.email,
+        sessionId: data.sessionId,
+        receiptId: data.receiptId || data.transactionId,
+        stationName: data.stationName || chargerData?.stationName || chargerData?.name || 'N/A',
+        chargerType: data.chargerType || chargerData?.chargerType || 'N/A',
+        duration: data.duration || 0,
+        energyUsed: data.energyUsed || 0,
+        rate: data.rate || data.plan?.rate || 0,
+        totalCost: data.finalCost || data.amountDebited || 0,
+        paymentMethod: data.paymentMethod || 'Wallet',
+        transactionId: data.transactionId || data.receiptId || data.sessionId,
+        completedAt: data.endTime || new Date().toISOString()
+      }
 
-    if (data) {
-      setSessionData(data?.completionData || data);
+      console.log('Invoice data: ',invoiceData)
 
-      sessionStorage.removeItem("sessionCompletion");
-      CacheService.clearPlanData();
-      CacheService.clearSessionData();
+      const result = await EmailService.sendInvoiceEmail(invoiceData)
+
+      if (result.success) {
+        setEmailStatus({ sending: false, sent: true, error: null })
+        setSnackbar({
+          open: true,
+          message: `Invoice sent to ${user?.email}`,
+          severity: 'success'
+        })
+      } else {
+        throw new Error(result.error)
+      }
+
+    } catch (error) {
+      console.error("Failed to send invoice email:", error)
+      setEmailStatus({ 
+        sending: false, 
+        sent: false, 
+        error: error.message || 'Failed to send email'
+      })
     }
-  }, []);
-// Invoice page to open and NOT allow going back
+  }
 
-  useEffect(() => {
-  // Push current page to history
-  window.history.pushState(null, "", window.location.href);
+  const handleResendEmail = async () => {
+    if (sessionData && user?.email) {
+      await sendInvoiceEmail(sessionData)
+    }
+  }
 
-  const handleBack = () => {
-    window.history.pushState(null, "", window.location.href);
-  };
+  const handleDone = () => {
+    navigate("/thank-you")
+  }
 
-  window.addEventListener("popstate", handleBack);
+  if (isLoading) {
+    return (
+      <div className="invoice-loading">
+        <CircularProgress sx={{ color: '#7dbb63' }} />
+        <p>Loading invoice...</p>
+        <style>{`
+          .invoice-loading {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            gap: 16px;
+          }
+        `}</style>
+      </div>
+    )
+  }
 
-  return () => {
-    window.removeEventListener("popstate", handleBack);
-  };
-}, []);
+  if (!sessionData) {
+    return (
+      <div className="invoice-page">
+        {/* <style>{invoiceStyles}</style> */}
+        <div className="invoice-header">
+          <h1>Invoice</h1>
+          <p>No session data found</p>
+        </div>
+        <div className="card" style={{ textAlign: 'center', padding: '40px' }}>
+          <p>The session data may have already been processed.</p>
+          <button className="done-btn" onClick={() => navigate('/dashboard')}>
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
 
+  const stationName = sessionData.stationName || chargerData?.stationName || chargerData?.name || "N/A"
+  const chargerType = sessionData.chargerType || chargerData?.chargerType || "N/A"
+  const durationMin = sessionData.duration || 0
+  const energy = sessionData.energyUsed || 0
+  const rate = sessionData.rate || sessionData.plan?.rate || 0
+  const totalCost = sessionData.finalCost || sessionData.amountDebited || (energy * rate)
+  const transactionId = sessionData.transactionId || sessionData.receiptId || sessionData.sessionId || "N/A"
+  const paymentMethod = sessionData.paymentMethod || "Wallet"
+  const sessionId = sessionData.sessionId || "N/A"
+  const completedAt = sessionData.endTime || sessionData.completedAt || new Date().toISOString()
 
-  if (!sessionData) return null;
+  const formatDuration = (mins) => {
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    if (h > 0) return `${h}h ${m}m`
+    return `${m} min`
+  }
 
-  // -----------------------------
-  //  Dynamic Values
-  // -----------------------------
+  const formatDate = (dateString) => {
+    try {
+      return new Date(dateString).toLocaleString('en-IN', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      })
+    } catch {
+      return 'N/A'
+    }
+  }
 
-  const planName = 0;
-  const rate = sessionData?.plan?.rate || 0;
-  const energy = sessionData?.energyUsed || 0;
-  const duration = sessionData?.duration || 0;
-  const finalCost =
-    sessionData?.finalCost ||
-    sessionData?.amountDebited ||
-    (energy * rate);
-
-  const gstAmount = ((finalCost * 18) / 100).toFixed(2);
-
-  const Row = ({ label, value, big }) => (
-    <div className="row">
-      <span className={`label ${big && "big"}`}>{label}</span>
-      <span className={`value ${big && "big"}`}>{value}</span>
+  const Row = ({ label, value, highlight, className }) => (
+    <div className={`row ${highlight ? 'highlight' : ''} ${className || ''}`}>
+      <span>{label}</span>
+      <span>{value}</span>
     </div>
-  );
+  )
 
   return (
-    <div className="invoice-container">
+    <div className="invoice-page">
       <style>{`
-        .invoice-container {
-          padding: 16px;
+        * {
+          box-sizing: border-box;
+        }
+
+        body {
+          margin: 0;
+        }
+
+
+        /* EMAIL STATUS */
+  .email-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 16px;
+    margin: -24px 16px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .email-status.sending {
+    background: #1976d2;
+    color: #fff;
+  }
+
+  .email-status.sent {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  .email-status.error {
+    background: #ffebee;
+    color: #c62828;
+  }
+
+  .email-status button {
+    background: #c62828;
+    color: #fff;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+
+
+        .invoice-page {
+          min-height: 100vh;
+          background: #f4f4f4;
+          font-family: Inter, sans-serif;
           padding-bottom: 120px;
-          font-family: Arial, sans-serif;
         }
 
-        .header {
-  display: flex;
-  justify-content: center;   /* 🔥 horizontal center */
-  align-items: center;       /* 🔥 vertical center */
-  height: 48px;              /* optional, clean spacing */
-}
-
-.header h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 600;
-}
-
-
-        .bell {
-          position: relative;
-        }
-
-        .badge {
-          position: absolute;
-          top: -5px;
-          right: -5px;
-          background: red;
+        /* HEADER */
+        .invoice-header {
+          background: #1f1f1f;
           color: #fff;
-          width: 16px;
-          height: 16px;
-          border-radius: 50%;
-          font-size: 10px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          text-align: center;
+          padding: 28px 16px 36px;
+          border-bottom-left-radius: 28px;
+          border-bottom-right-radius: 28px;
         }
 
-        .invoice-no {
-          display: flex;
-          justify-content: space-between;
-          font-size: 14px;
-          margin-bottom: 20px;
+        .header-icon {
+          margin-bottom: 16px;
         }
 
-        h3 {
-          margin: 20px 0 10px;
+        .invoice-header h1 {
+          margin: 0;
+          font-size: 16px;
+          font-weight: 700;
+          font-family: 'Roboto', sans-serif;
+        }
+
+        .invoice-header p {
+     
+          font-size: 12px;
+           font-weight: 400;
+         opacity: 0.75;
+         font-family: 'Roboto', sans-serif;
+          color: #fff;
+         
+        }
+          .sub-heading{
           font-size: 18px;
+           font-weight: 600;
+          }
+
+        /* CARD */
+        .card {
+          background: #fff;
+          margin: 16px;
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 0 0 1px #e6e6e6;
+        }
+
+        .card h2 {
+          margin: 0;
+          padding: 16px;
+          font-size: 18px;
+          font-weight: 600;
         }
 
         .row {
           display: flex;
           justify-content: space-between;
-          padding: 10px 0;
-          font-size: 15px;
+          padding: 14px 16px;
+          font-size: 12px;
+          border-top: 1px solid #eee;
         }
 
-        .label {
+        .row span:first-child {
           color: #444;
+        }
+
+        .row span:last-child {
           font-weight: 500;
         }
 
-        .value {
-          font-weight: 400;
-        }
-
-        .big {
-          font-size: 17px;
+        .highlight {
+          background: #B1DDFF;
           font-weight: 600;
         }
 
-        .divider {
-          border-bottom: 1px solid #ddd;
-          margin: 20px 0;
-        }
-
-        .status {
+        .paid {
           display: flex;
           align-items: center;
           gap: 6px;
-          color: #6DB85B;
-          font-weight: 700;
-          padding: 4px 10px;
-          border-radius: 16px;
-          font-size: 15px;
+          color: #63b54f;
+          font-weight: 600;
         }
 
-       .bottom-button {
-  position: fixed;
-  bottom: 16px;
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-}
+        .paid svg {
+          font-size: 18px;
+        }
 
-.bottom-button button {
-  width: 90%;
-  padding: 14px;
-  border-radius: 24px;
-  border: none;
-  background: #212121;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-}
- 
+        .highlight-green {
+          background: #C0EFB0;
+          font-weight: 600;
+        }
+
+        /* BOTTOM BUTTON */
+        .bottom-action {
+          position: fixed;
+          bottom: 16px;
+          left: 0;
+          right: 0;
+          display: flex;
+          justify-content: center;
+        }
+
+        .bottom-action button {
+          width: 90%;
+          max-width: 420px;
+          padding: 14px;
+          border-radius: 28px;
+          border: none;
+          background: #1f1f1f;
+          color: #fff;
+          font-size: 16px;
+          font-weight: 600;
+        }
+
+        /* RESPONSIVE */
+        @media (min-width: 768px) {
+          .card {
+            max-width: 600px;
+            margin: 16px auto;
+          }
+        }
       `}</style>
 
       {/* HEADER */}
-      <div className="header">
-      
-        <h2>Invoice</h2>
-      
+      <div className="invoice-header">
+        <div className="header-icon">
+          <CheckCircle sx={{ fontSize: 48, color: '#7dbb63' }} />
+        </div>
+        <h1>Invoice</h1>
+        <p>Session Completed</p>
       </div>
 
-      {/* INVOICE NUMBER (dynamic if available) */}
-      {/* <div className="invoice-no">
-        <span>{sessionData?.invoiceId || "N/A"}</span>
-        <span>{sessionData?.invoiceId || "N/A"}</span>
-      </div> */}
+      {emailStatus.sending && (
+        <div className="email-status sending">
+          <CircularProgress size={16} sx={{ color: '#fff' }} />
+          <span>Sending invoice to {user?.email}...</span>
+        </div>
+      )}
+      
+      {emailStatus.sent && (
+        <div className="email-status sent">
+          <Email sx={{ fontSize: 18 }} />
+          <span>Invoice sent to {user?.email}</span>
+        </div>
+      )}
 
-      <h3>Charging Details</h3>
+      {emailStatus.error && (
+        <div className="email-status error">
+          <span>Failed to send email</span>
+          <button onClick={handleResendEmail}>Retry</button>
+        </div>
+      )}
 
-      <Row label="Station Name" value={chargerData?.stationName || "N/A"} />
-      <Row label="Charger Type" value={chargerData?.chargerType || "N/A"} />
-      <Row label="Duration" value={formatDuration(duration)} />
-      <Row label="Energy Delivered" value={`${energy} kWh`} />
-      <Row label="Charging Plan" value={planName} />
-      <Row label="Rate per kWh" value={`₹${rate}`} />
-      <Row label="GST (18%)" value={`₹${gstAmount}`} />
-      <Row label="Total Energy Cost" value={`₹${finalCost}`} big />
+      {/* CHARGING DETAILS */}
+      <div className="card">
+        <h2 className="sub-heading">Charging Details</h2>
 
-      <div className="divider" />
+        <Row label="Station Name" value={stationName} />
+        <Row label="Charger Type" value={chargerType} />
+        <Row label="Duration" value={formatDuration(durationMin)} />
+        <Row label="Energy Delivered" value={`${energy} kWh`} />
+        <Row label="Rate per kWh" value={`₹${rate}`} />
+        <Row label="Total Energy Cost" value={`₹${totalCost}`} highlight />
+      </div>
 
-      <h3>Payment Details</h3>
+      {/* PAYMENT DETAILS */}
+      <div className="card">
+        <h2>Payment Details</h2>
 
-      <Row label="Payment Method" value={sessionData?.paymentMethod || "Wallet"} />
-      <Row label="Transaction ID" value={sessionData?.transactionId || "N/A"} />
+        <Row label="Payment Method" value={paymentMethod} />
+        <Row label="Transaction ID" value={transactionId} />
 
-      <div className="row">
-        <span className="label">Status</span>
-        <div className="status">
-          <CheckCircle style={{ fontSize: 16 }} />
-          PAID
+        <div className="row">
+          <span>Status</span>
+          <span className="paid">
+            <CheckCircle />
+            PAID
+          </span>
+        </div>
+
+        <div className="row highlight-green">
+          <span>Total Amount Paid</span>
+          <span>₹{totalCost}</span>
         </div>
       </div>
 
-      <Row label="Total Amount Paid" value={`₹${finalCost}`} />
-
       {/* BOTTOM BUTTON */}
-<div className="bottom-button">
-  <button onClick={() => navigate("/thank-you")}>
-    OK
-  </button>
-</div>
-
+      <div className="bottom-action">
+        <button onClick={handleDone}>
+          Done
+        </button>
+      </div>
     </div>
   );
 };

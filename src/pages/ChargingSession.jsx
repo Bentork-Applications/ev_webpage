@@ -1,5 +1,4 @@
-import React, { useEffect, useState, useRef } from "react"
-import { useNavigate } from "react-router-dom"
+import React, { useEffect } from "react"
 import {
   Container,
   Paper,
@@ -12,164 +11,132 @@ import {
   DialogContent,
   DialogActions
 } from "@mui/material"
-import {
-  BatteryChargingFull,
-  Bolt,
-  NotificationsNone,
-  ReportProblemRounded,
-  LocalCafeRounded
-} from "@mui/icons-material"    
+import { Bolt } from "@mui/icons-material"
+import { useSession } from "../store/SessionContext"
 
-import SessionService from "../services/session.service"
-import CacheService from "../services/cache.service"
 import energyIcon from "../assets/images/energy.svg";
 import batteryIcon from "../assets/images/battery.svg";
 import notifyIcon from "../assets/images/notify.svg"
+import Flag from "../assets/images/Flag.svg"
 
 const ChargingSession = () => {
-  const navigate = useNavigate()
 
-  const intervalRef = useRef(null)
-  const energyIntervalRef = useRef(null)
+  const {
+    session,
+    chargingData,
+    isInitializing,
+    loadingMessage,
+    messageIndex,
+    loadingMessages,
+    isLoading,
+    error,
+    isStopping,
+    isCompleted,
+    notifyOnComplete,
+    isSessionActive,
 
-  const [selectedPlan, setSelectedPlan] = useState(null)
-  const [session, setSession] = useState(null)
-  const [chargingData, setChargingData] = useState({
-    energyUsed: 0,
-    timeElapsed: 0,
-    percentage: 0,
-    status: "ACTIVE"
-  })
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [stopDialog, setStopDialog] = useState(false)
-  const [stopping, setStopping] = useState(false)
-  const [sessionCompleted, setSessionCompleted] = useState(false)
-  const [notifyOnComplete, setNotifyOnComplete] = useState(true)
-const getBatteryHealth = () => {
-  const p = chargingData.percentage
+    remainingTime,
+    batteryHealth,
 
-  if (p >= 80) return "Excellent"
-  if (p >= 55) return "Good"
-  if (p >= 30) return "Average"
-  return "Low"
-}
+    initializeSession,
+    stopSession,
+    toggleNotification,
+    formatTime,
+    setError
+  } = useSession()
+
+  const [stopDialog, setStopDialog] = React.useState(false)
 
   useEffect(() => {
     initializeSession()
-    return () => {
-      clearInterval(intervalRef.current)
-      clearInterval(energyIntervalRef.current)
-    }
   }, [])
 
-  const initializeSession = async () => {
-    try {
-      const activeSession =
-        CacheService.getSessionData() || (await SessionService.getActiveSession?.())
-      const plan = CacheService.getPlanData?.()
-
-      if (!activeSession || !(activeSession.sessionId || activeSession.id)) {
-        navigate("/config-charging")
-        return
-      }
-
-      setSession(activeSession)
-      setSelectedPlan(plan)
-
-      if (plan?.durationMin) startTimer(plan.durationMin)
-      startEnergyMonitoring(activeSession.sessionId || activeSession.id)
-      setLoading(false)
-    } catch {
-      setError("Failed to load charging session")
-      setLoading(false)
-    }
+  const handleStopClick = () => {
+    setStopDialog(true)
   }
 
-  const startTimer = (durationMinutes) => {
-    const totalSeconds = durationMinutes * 60
-    intervalRef.current = setInterval(() => {
-      setChargingData((prev) => {
-        const newElapsed = prev.timeElapsed + 1
-        const percentage = (newElapsed / totalSeconds) * 100
-
-        if (newElapsed >= totalSeconds) {
-          clearInterval(intervalRef.current)
-          handleSessionComplete({ status: "COMPLETED" })
-        }
-
-        return { ...prev, timeElapsed: newElapsed, percentage: Math.min(100, percentage) }
-      })
-    }, 1000)
-  }
-
-  const startEnergyMonitoring = async (sessionId) => {
-    const checkEnergy = async () => {
-      try {
-        const status = await SessionService.getSessionStatus(sessionId)
-        console.log("Server Status:", status);
-        const kwh = await SessionService.getKwhUsed(sessionId)
-        console.log("Server Status:", status);
-        setChargingData((prev) => ({
-          ...prev,
-          energyUsed: kwh || 0,
-          status: (status || "ACTIVE").toUpperCase()
-        }))
-        if ((status || "").toUpperCase() === "COMPLETED") handleSessionComplete({ status: "COMPLETED" })
-      } catch (err) {
-        console.error("Energy error:", err)
-      }
-    }
-    checkEnergy()
-    energyIntervalRef.current = setInterval(checkEnergy, 10000)
-  }
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`
-  }
-
-  const getRemainingTime = () => {
-    if (!selectedPlan?.durationMin) return "--:--"
-    const total = selectedPlan.durationMin * 60
-    return formatTime(Math.max(0, total - chargingData.timeElapsed))
-  }
-
-  const handleStopSession = async () => {
-    if (stopping) return
+  const handleStopConfirm = async () => {
     setStopDialog(false)
-    setStopping(true)
-    setError("")
-    try {
-      const sessionId = session?.sessionId || session?.id
-      console.log("Stopping session:", sessionId)
-      await SessionService.stopSession(sessionId)
-      handleSessionComplete({ status: "STOPPED" })
-    } catch (err) {
-      console.error(err)
-      setError("Failed to stop charging session")
-    }
-    setStopping(false)
+    await stopSession()
   }
 
-  const handleSessionComplete = (data) => {
-    // clearInterval(intervalRef.current)
-    // clearInterval(energyIntervalRef.current)
-    setChargingData((prev) => ({ ...prev, status: data.status }))
-    setSessionCompleted(true)
-    setTimeout(() => navigate("/invoice"), 1500)
+  if (isLoading) {
+    return (
+      <div className="loading">
+        <CircularProgress />
+        <p>Loading session...</p>
+        <style>{`
+          .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+            gap: 10px;
+          }
+        `}</style>
+      </div>
+    )
   }
-
-  if (loading) return (
-    <div className="loading"><CircularProgress /><p>Loading session...</p></div>
-  )
-
-  const isSessionActive = (chargingData.status || "").toUpperCase() === "ACTIVE"
 
   return (
-    <Container maxWidth="sm">
-      <Paper className="main-card">
+    <Container
+  maxWidth="sm"
+  sx={{
+     height: "100vh",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+    bgcolor: "#fdfdfdff",
+  }}
+>
+
+  {isInitializing && (
+    <div className="init-overlay">
+      <div className="init-popup">
+        <div className="init-spinner">
+          <CircularProgress 
+            size={80} 
+            thickness={4}
+            sx={{ color: "#7dbb63" }}
+          />
+          <Bolt className="init-bolt-icon" />
+        </div>
+              
+        <h2 className="init-title">Starting Your Session</h2>
+        <p className="init-message">{loadingMessage}</p>
+              
+        <div className="init-dots">
+          {loadingMessages.slice(0, 4).map((_, idx) => (
+            <span 
+              key={idx} 
+              className={`init-dot ${idx <= messageIndex ? 'active' : ''}`}
+            />
+          ))}
+        </div>
+
+        <p className="init-hint">
+          Please ensure your vehicle is connected
+        </p>
+      </div>
+    </div>
+  )}
+
+       <Paper
+    elevation={0}                 
+    square
+    sx={{
+      width: "100%",
+      height: "100%",
+      borderRadius: 0,             
+      background: "transparent",   
+      filter: isInitializing ? "blur(8px)" : "none",
+      transition: "filter 0.3s ease",
+      pointerEvents: isInitializing ? "none" : "auto",
+    }}
+    className="main-card"
+  >
 
         {/* HEADER */}
         <div className="header">
@@ -192,14 +159,29 @@ const getBatteryHealth = () => {
           </div>
         </div>
 
-        {error && <Alert severity="error">{error}</Alert>}
-        {sessionCompleted && <Alert severity="success">Completed! Redirecting...</Alert>}
+        {error && (
+          <Alert 
+            severity="error" 
+            sx={{ mx: 2, mb: 2 }}
+            onClose={() => setError('')}
+          >
+            {error}
+          </Alert>
+        )}
+        {isCompleted && (
+          <Alert severity="success" sx={{ mx: 2, mb: 2 }}>
+            Session Complete! Redirecting to invoice...
+          </Alert>
+        )}
 
         {/* RATE & TIME */}
-        <div className="rate-time">
-          <div><h2>{selectedPlan?.rate || 20} kW/h</h2><p>Charging Rate</p></div>
-          <div className="right"><h2>{getRemainingTime()}</h2><p>Time Left</p></div>
+        
+  
+   <div className="time-center">
+          <h2>{remainingTime}</h2>
+          <p>Time Left</p>
         </div>
+
 
         {/* ENERGY & HEALTH */}
         {/* <div className="stats">
@@ -227,7 +209,7 @@ const getBatteryHealth = () => {
       style={{ width: "32px", height: "32px" }}
     />
     <div>
-      <h3>{getBatteryHealth()}</h3>
+      <h3>{batteryHealth}</h3>
       <p>Battery Health</p>
     </div>
   </div>
@@ -237,31 +219,47 @@ const getBatteryHealth = () => {
         {/* NOTIFY */}
         <div className="notify">
           {/* <div className="notify-left"><NotificationsNone /><span>Notify when complete</span></div> */}
-          <div className="notify-left"> <img src={notifyIcon} alt="Notify" className="notify-icon" /> <span>Notify when complete</span></div>
-          <Switch checked={notifyOnComplete} onChange={() => setNotifyOnComplete(!notifyOnComplete)} />
+          <div className="notify-left"> 
+            <img src={notifyIcon} alt="Notify" className="notify-icon" /> 
+            <span>Notify when complete</span>
+          </div>
+          <Switch
+            className="custom-switch"
+            checked={notifyOnComplete}
+            onChange={toggleNotification}
+          />
         </div>
 
         {/* ACTIONS */}
-        <div className="actions">
+        {/* <div className="actions">
           <Button fullWidth startIcon={<LocalCafeRounded />} className="btn cafe">Nearby Cafe</Button>
           <Button fullWidth startIcon={<ReportProblemRounded />} className="btn report">Report</Button>
-        </div>
+        </div> */}
 
         {/* STOP BUTTON */}
-        <Button
+        <div className="actions">
+      <Button className="btn cafe">
+  <img
+    src={Flag}
+    alt="report"
+    className="btn-icon"
+  />
+</Button>
+          <Button
           fullWidth
           variant="contained"
           color="error"
           className="stop-btn"
-          onClick={() => setStopDialog(true)}
-          disabled={stopping || sessionCompleted || !isSessionActive}
+          onClick={handleStopClick}
+          disabled={isStopping  || isCompleted  || !isSessionActive}
         >
-          {stopping ? "Stopping..." : "Stop Charging"}
+          {isStopping  ? "Stopping..." : "Stop Charging"}
         </Button>
 
-        <p className="station-id">Station ID: {session?.stationId || session?.sessionId || session?.id}</p>
+        </div>
+        <p className="station-id">Station ID: {session?.sessionId || session?.id || 'N/A'}</p>
 
-        <Dialog open={stopDialog} onClose={() => setStopDialog(false)}>
+        {/* <Dialog open={stopDialog} onClose={() => !isStopping && setStopDialog(false)}>
           <DialogTitle>Warning!</DialogTitle>
           <DialogContent>
             <p>Are you sure want to Stop the Charging?</p>
@@ -272,63 +270,362 @@ const getBatteryHealth = () => {
             <Button onClick={() => setStopDialog(false)}color="error">Cancel</Button>
             <Button onClick={handleStopSession} color="error" variant="contained">Stop</Button>
           </DialogActions>
-        </Dialog>
+        </Dialog> */}
 
-        <Dialog open={stopDialog} onClose={() => setStopDialog(false)}>
-  <DialogTitle style={{ fontWeight: "700", fontSize: "22px" }}>
-    Warning!
-  </DialogTitle>
+        <Dialog open={stopDialog} onClose={() => !isStopping && setStopDialog(false)}>
+          <DialogTitle style={{ fontWeight: "700", fontSize: "22px" }}>
+            Warning!
+          </DialogTitle>
 
-  <DialogContent>
-    Are you sure want to Stop the Charging?
-   <p>Time elapsed: {formatTime(chargingData.timeElapsed)}</p>
+          <DialogContent>
+            Are you sure want to Stop the Charging?
+            <p>Time elapsed: {formatTime(chargingData.timeElapsed)}</p>
             <p>Energy used: {chargingData.energyUsed.toFixed(2)} kWh</p>
-  </DialogContent>
+          </DialogContent>
 
-  <DialogActions className="dialog-actions-custom">
-    <button className="back-btn" onClick={() => setStopDialog(false)}>Back</button>
-    <button className="stop-btn-dark" onClick={handleStopSession}>Stop</button>
-  </DialogActions>
-</Dialog>
+          <DialogActions className="dialog-actions-custom">
+            <button 
+              className="back-btn" 
+              onClick={() => setStopDialog(false)} 
+              disabled={isStopping}>
+                Back
+            </button>
+            <button 
+              className="stop-btn-dark" 
+              onClick={handleStopConfirm} 
+              disabled={isStopping}>
+                {isStopping ? 'Stopping...' : 'Stop Session'}
+            </button>
+          </DialogActions>
+        </Dialog>
 
 
         {/* INTERNAL CSS */}
         <style>{`
-          .main-card { padding: 20px; border-radius: 20px; width: 100%; box-sizing: border-box; }
-          .header { text-align: center; }
-          .logo { width: 40%; max-width: 160px; display: block; margin: 0 auto 8px; }
-          .circle-container { position: relative; width: 80%; max-width: 260px; height: auto; margin: 30px auto; }
-          .circle-bg { color: #C0EFB0 !important; }
-          .circle-progress { position: absolute; left: 0; top: 0; color: #6DB85B !important; }
-          .circle-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
-          .bolt-icon { color: #6DB85B; font-size: 32px; }
-          .rate-time { display: flex; justify-content: space-between; flex-wrap: wrap; }
-          .right { text-align: right; } 
-          .stats { display: flex; justify-content: space-between; margin: 20px 0; flex-wrap: wrap; gap: 200px; }
-       
-          .stat-box { display: flex; align-items: center; gap: 12px;}
-.stat-icon {
-  width: 32px;
-  height: 32px;
+
+        html, body {
+          height: 100%;
+          margin: 0;
+          overflow: hidden;  
+        }
+
+
+          .init-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+          }
+
+          @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+          }
+
+          .init-popup {
+            background: #fff;
+            border-radius: 28px;
+            padding: 48px 36px;
+            text-align: center;
+            max-width: 360px;
+            width: 90%;
+            animation: slideUp 0.4s ease;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+          }
+
+          @keyframes slideUp {
+            from { transform: translateY(40px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+          }
+
+          .init-spinner {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 28px;
+          }
+
+          .init-bolt-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: #7dbb63;
+            animation: pulse 1.5s ease infinite;
+          }
+
+          @keyframes pulse {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.85); }
+          }
+
+          .init-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin: 0 0 16px;
+            color: #1a1a1a;
+          }
+
+          .init-message {
+            font-size: 15px;
+            color: #555;
+            margin: 0 0 24px;
+            min-height: 22px;
+            transition: opacity 0.3s ease;
+          }
+
+          .init-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 24px;
+          }
+
+          .init-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: all 0.3s ease;
+          }
+
+          .init-dot.active {
+            background: #7dbb63;
+            transform: scale(1.3);
+          }
+
+          .init-hint {
+            font-size: 13px;
+            color: #888;
+            margin: 0;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+          }
+
+
+          .main-card {
+  padding: 22px 18px;
+  border-radius: 26px;
+  height: 100%;
+  max-height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
+
+/* HEADER */
+.header {
+  text-align: center;
+   display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.logo {
+width: clamp(120px, 30vw, 180px);
+  margin: 0 auto 10px;
+}
+
+/* CIRCLE */
+.circle-container {
+  position: relative;
+  width: clamp(200px, 60vw, 260px);
+  height: clamp(200px, 60vw, 260px);
+  margin: 49px 50px;
+}
+
+.circle-bg {
+  color: #cfeec4 !important;
+}
+
+.circle-progress {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: #7dbb63 !important;
+}
+
+.circle-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.bolt-icon {
+  font-size: 34px;
+  color: #7dbb63;
+}
+
+.circle-text h1 {
+  font-size: 42px;
+  margin: 6px 0 0;
+  font-weight: 700;
+}
+
+.circle-text p {
+  margin: 0;
+  color: #555;
+  font-size: 14px;
+}
+
+/* RATE & TIME *
+.time-center {
+          text-align: center;
+            margin-top: 10px;
+        }
+
+
+.time-center h2 {
+  font-size: clamp(20px, 6vw, 26px);
+  margin: 0;
+}
+
+.time-center p {
+  font-size: 12px;
+  color: #666;
+}
+
+
+
+
+/* STATS */
+.stats {
+  display: flex;
+  justify-content: space-between;
+  margin: 28px 0;
+}
+
+.stat-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-box h3 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.stat-box p {
+  margin: 0;
+  font-size: 13px;
+  color: #777;
+}
+
+/* NOTIFY */
+.notify {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  border-radius:28px;
+  border:0.25px solid #00000024;
+  background: #F1F1F1;
+   margin-left:10px;
+  
+}
+
+.notify-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  font-weight: 400;
+
+  
+}
+
+
 .notify-icon {
-  width: 24px;
-  height: 24px;
+  width: 16px;
+  height: 20px;
+  margin-left:20px;
 }
 
-          .notify { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-          .notify-left { display: flex; align-items: center; gap: 5px; }
-          .actions { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
-          .btn { border-radius: 12px !important; font-weight: bold !important; flex: 1; min-width: 140px; }
-          .cafe { background: #ffe0c2 !important; color: #a84310 !important; }
-          .report { background: #d9f3df !important; color: #2e7d32 !important; }
-          .stop-btn { border-radius: 16px !important; margin-top: 15px !important; }
-          .station-id { text-align: center; margin-top: 20px; color: gray; font-size: 14px; }
-          .loading { display: flex; justify-content: center; align-items: center; gap: 10px; height: 70vh; flex-direction: column; }
-          .DialogActions_button{ gap: 100px; justify-content: space-between ; display: flex;}
+/* OFF state track */
+.custom-switch .MuiSwitch-track {
+  background-color: #ccc;
+  opacity: 1;
+  border-radius: 20px;
+}
+
+/* ON state */
+.custom-switch.Mui-checked .MuiSwitch-thumb {
+  background-color: #ffffff;
+}
 
 
-          .dialog-actions-custom {
+
+/* Focus & hover fix */
+.custom-switch .MuiSwitch-switchBase.Mui-checked {
+  color: #000000ff;
+}
+
+
+/* ACTION BUTTONS */
+.actions {
+  display: flex;
+  gap: 10px;
+  
+}
+
+.btn {  
+    margin-top: 130px !important;
+     border:1px solid #CCCCCC;
+     border-radius: 12px !important;
+}
+
+
+
+.report {
+  background: #dff3e5 !important;
+  color: #2e7d32 !important;
+}
+
+/* STOP BUTTON */
+.stop-btn {
+  border-radius: 12px !important;
+  height: 44px;
+  width: 351px;
+  font-size: 12px !important;
+  margin-top: 130px !important;
+   font-weight: 700;
+   
+      padding: 10px;
+
+}
+
+/* STATION ID */
+.station-id {
+  text-align: center;
+  margin-top: 30px;
+  color: #00000080;
+  font-size: 12px;
+   font-weight: 400;
+}
+
+/* LOADING */
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 70vh;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* DIALOG */
+.dialog-actions-custom {
   display: flex;
   justify-content: center;
   gap: 20px;
@@ -338,33 +635,23 @@ const getBatteryHealth = () => {
 .back-btn {
   min-width: 120px;
   padding: 12px 26px;
-  border-radius: 25px;
+  border-radius: 30px;
   border: 2px solid #000;
   background: white;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  cursor: pointer;
 }
 
 .stop-btn-dark {
   min-width: 120px;
   padding: 12px 26px;
-  border-radius: 25px;
-  border: none;
+  border-radius: 30px;
   background: #1c1c1c;
   color: white;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  cursor: pointer;
 }
 
-.stop-btn-dark:hover {
-  background: #000;
-}
-
-.back-btn:hover {
-  background: #f5f5f5;
-}
 
         `}</style>
       </Paper>

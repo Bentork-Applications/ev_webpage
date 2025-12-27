@@ -17,8 +17,9 @@ import CacheService from '../services/cache.service'
 import AuthService from '../services/auth.service'
 import Logo from "../assets/images/logo.png";
 import Onboarding from "../assets/images/onboarding.png";
-
+import BottomImg from "../assets/images/BottomImg.png";
 import "../assets/styles/Login.css";
+import TopRightBg from "../assets/images/tr.png";
 
 const Login = () => {
   const navigate = useNavigate()
@@ -38,7 +39,7 @@ const Login = () => {
   const checkOAuthCallback = async () => {
     const urlParam = new URLSearchParams(window.location.search)
     const token = urlParam.get("token")
-    const ocppIdFromUrl = urlParam.get('ocppId') || ocppId
+    const ocppIdFromUrl = sessionStorage.getItem('ocppId')
 
     if(token){
       setLoading(true)
@@ -88,12 +89,22 @@ const Login = () => {
     if (ocppId) {
       sessionStorage.setItem('ocppId', ocppId)
     }
-
+    console.log('google')
     window.location.href = import.meta.env.VITE_API_BASE_URL + '/oauth2/authorization/google'
   }
   
   return (
     <div className={`login-container ${animate ? "fade-in" : ""}`}>
+       <img
+  src={TopRightBg}
+  alt="Background decoration"
+  className="top-right-image"
+/>
+      <img
+  src={BottomImg}
+  alt="Bottom decoration"
+  className="bottom-image"
+/>
       <img
     src={Logo}
     alt="Bentork Logo"
