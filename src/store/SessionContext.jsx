@@ -46,6 +46,15 @@ export const SessionProvider = ({ children }) => {
     const sessionCompleteHandled = useRef(false)
     const initializationStarted = useRef(false)
 
+    const sessionRef = useRef(null)
+    const planRef = useRef(null)
+    const chargingDataRef= useRef({
+        energyUsed: 0,
+        timeElapsed: 0,
+        percentage: 0,
+        status: 'INITIALIZING'
+    })
+
     const [session, setSession] = useState(null)
     const [plan, setPlan] = useState(null)
     const [chargingData, setChargingData] = useState({
@@ -64,6 +73,18 @@ export const SessionProvider = ({ children }) => {
     const [isCompleted, setIsCompleted] = useState(false)
     const [notifyOnComplete, setNotifyOnComplete] = useState(true)
     const [notificationPermission, setNotificationPermission] = useState('default')
+
+    useEffect(() => {
+      sessionRef.current = session
+    }, [session])
+
+    useEffect(() => {
+      planRef.current = plan
+    }, [plan])
+
+    useEffect(() => {
+      chargingDataRef.current = chargerData
+    }, [chargerData])
 
     const isSessionActive = useMemo(() => {
       return ['active','initiated'].includes(chargerData.status)
@@ -179,7 +200,11 @@ export const SessionProvider = ({ children }) => {
             return { success: false }
         }
 
-        const sessionStatus = String(activeSession.status || '').toUpperCase()
+        const sessionId = activeSession?.sessionId || activeSession?.id
+        const currentStatus = await SessionService.getSessionStatus(sessionId)
+        console.log('Current session ID from API: ',currentStatus)
+
+        const sessionStatus = String(currentStatus || '').toUpperCase()
         if (sessionStatus === 'FAILED') {
             console.error('Session status is FAILED, redirecting back')
             setError('Failed to start charging session')
@@ -193,8 +218,12 @@ export const SessionProvider = ({ children }) => {
             return { success: false, error: 'Session failed to start' }
         }
 
+        activeSession.status = sessionStatus
+
         setSession(activeSession)
         setPlan(activePlan)
+        sessionRef.current = activeSession
+        planRef.current = activePlan
 
         const savedTimer = CacheService.getSessionTimer()
         if (savedTimer && savedTimer.sessionId === (activeSession.sessionId || activeSession.id)) {
@@ -233,7 +262,12 @@ export const SessionProvider = ({ children }) => {
 
         await new Promise(resolve => setTimeout(resolve, APP_CONFIG.SESSION.WARMUP_DURATION))
 
-        await SessionService.completeWarmup(activeSession.sessionId || activeSession.id)
+        const updatedSession = await SessionService.completeWarmup(activeSession.sessionId || activeSession.id)
+
+        if (updatedSession) {
+          setSession(updatedSession)
+          sessionRef.current = updatedSession
+        }
         
         setIsInitializing(false)
         setChargingData(prev => ({ ...prev, status: 'ACTIVE' }))
@@ -256,9 +290,12 @@ export const SessionProvider = ({ children }) => {
         }))
 
         timerRef.current = setInterval(() => {
-        setChargingData(prev => {
-            if (sessionCompleteHandled.current) return prev
+          if (sessionCompleteHandled.current) {
+            console.log('Session already completed, stopping timer')
+            return
+          }
 
+        setChargingData(prev => {
             const newElapsed = prev.timeElapsed + 1
             const percentage = durationSeconds > 0 
             ? (newElapsed / durationSeconds) * 100 
@@ -274,14 +311,16 @@ export const SessionProvider = ({ children }) => {
               }
             }
 
-            if (newElapsed >= durationSeconds && durationSeconds > 0) {
-              handleSessionComplete({ status: 'COMPLETED' })
+            if (newElapsed >= durationSeconds && durationSeconds > 0 && !sessionCompleteHandled.current) {
+              console.log('Timer completed, triggering session completed')
+              setTimeout(() => handleSessionComplete({ status: 'COMPLETED' }), 0)
             }
 
             return {
               ...prev,
               timeElapsed: newElapsed,
-              percentage: Math.min(100, percentage)
+              percentage: Math.min(100, percentage),
+              status: 'ACTIVE'
             }
         })
         }, 1000)
@@ -293,7 +332,7 @@ export const SessionProvider = ({ children }) => {
             
             setChargingData(prev => ({
                 ...prev,
-                energyUsed: typeof data.energyUsed === 'number' ? data.energyUsed : prev.energyUsed,
+                energyUsed: typeof data.energyUsed === 'number' && data.energyUsed > 0.001 ? data.energyUsed : prev.energyUsed,
                 status: data.status || prev.status
             }))
 
@@ -359,32 +398,39 @@ export const SessionProvider = ({ children }) => {
     setChargingData(prev => ({ ...prev, status: data.status }))
     setIsCompleted(true)
 
+    const currentSession = sessionRef.current
+    const currentPlan = planRef.current
+    const currentChagingData = chargingData.current
+
+    console.log('Building completion data with ', {currentStatus, currentPlan, currentChagingData})
+
     const completionData = {
-      sessionId: session?.sessionId || session?.id,
-      receiptId: session?.receiptId,
+      sessionId: currentSession?.sessionId || currentSession?.id,
+      receiptId: currentSession?.receiptId,
       status: data.status,
-      startTime: session?.startTime,
+      startTime: currentSession?.startTime,
       endTime: new Date().toISOString(),
-      duration: Math.floor(chargingData.timeElapsed / 60),
-      energyUsed: chargingData.energyUsed || 0,
-      plan: plan,
-      amountDebited: session?.amountDebited || plan?.walletDeduction,
-      finalCost: session?.amountDebited || plan?.walletDeduction,
-      rate: chargerData?.rate || plan?.rate || 0,
+      duration: Math.floor(currentChagingData.timeElapsed / 60),
+      energyUsed: currentChagingData.energyUsed || 0,
+      plan: currentPlan,
+      amountDebited: currentSession?.amountDebited || currentPlan?.walletDeduction,
+      finalCost: currentSession?.amountDebited || currentPlan?.walletDeduction,
+      rate: currentChagingData?.rate || currentPlan?.rate || 0,
       transactionId: session?.receiptId || session?.sessionId || session?.id,
       paymentMethod: 'Wallet',
-      stationName: chargerData?.stationName || chargerData?.name,
-      chargerType: chargerData?.chargerType,
+      stationName: currentChagingData?.stationName || currentChagingData?.name,
+      chargerType: currentChagingData?.chargerType,
       userName: user?.name,
       userEmail: user?.email
     }
 
     console.log('Complete session data: ',completionData)
 
-    sessionStorage.setItem('sessionCompletion', JSON.stringify({
+    const dataToSave = {
       completionData,
       notifyOnComplete
-    }))
+    }
+    CacheService.saveSessionData(dataToSave)
 
     if (notifyOnComplete && notificationPermission === 'granted') {
       await NotificationService.sendSessionCompleted(

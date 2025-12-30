@@ -27,9 +27,9 @@ const Invoice = () => {
   const loadSessionData = async () => {
     try {
       const stored = CacheService.getSessionData()
-      
+      let parsed
       if (stored) {
-        const parsed = JSON.parse(stored)
+        parsed = JSON.parse(stored)
         const completionData = parsed.completionData || parsed
 
         setSessionData(completionData)
