@@ -299,11 +299,20 @@ export const SessionProvider = ({ children }) => {
               return
             }
 
-          setChargingData(prev => {
+            setChargingData(prev => {
               const newElapsed = prev.timeElapsed + 1
               const percentage = durationSeconds > 0 
               ? (newElapsed / durationSeconds) * 100 
               : 0
+
+            const updated = {
+                ...prev,
+                timeElapsed: newElapsed,
+                percentage: Math.min(100, percentage),
+                status: 'ACTIVE'
+              }
+
+              chargingDataRef.current = updated
 
               SessionService.updateTimerState(newElapsed, percentage)
 
@@ -320,16 +329,11 @@ export const SessionProvider = ({ children }) => {
                 setTimeout(() => handleSessionComplete({ status: 'COMPLETED' }), 0)
               }
 
-              return {
-                ...prev,
-                timeElapsed: newElapsed,
-                percentage: Math.min(100, percentage),
-                status: 'ACTIVE'
-              }
+              return updated
           })
           }, 1000)
 
-          pollingRef.current = setInterval(async () => {
+            pollingRef.current = setInterval(async () => {
               if (sessionCompleteHandled.current) return
               
               try{
@@ -351,10 +355,14 @@ export const SessionProvider = ({ children }) => {
               }, APP_CONFIG.SESSION.STATUS_POLL_INTERVAL)
 
               SessionService.fetchSessionData(sessionId).then(data => {
-                  setChargingData(prev => ({
+                  setChargingData(prev => {
+                    const updated = {
                       ...prev,
                       energyUsed: typeof data.energyUsed === 'number' ? data.energyUsed : 0
-              }))
+                    }
+                    chargingDataRef.current = updated
+                    return updated
+              })
           })
       }, [notifyOnComplete, notificationPermission])
 
@@ -408,7 +416,7 @@ export const SessionProvider = ({ children }) => {
 
     const currentSession = sessionRef.current
     const currentPlan = planRef.current
-    const currentChagingData = chargingData.current
+    const currentChagingData = chargingDataRef.current
 
     console.log('Building completion data with ', {currentSession, currentPlan, currentChagingData})
 
@@ -418,7 +426,7 @@ export const SessionProvider = ({ children }) => {
       status: data.status,
       startTime: currentSession?.startTime,
       endTime: new Date().toISOString(),
-      duration: Math.floor(currentChagingData.timeElapsed / 60),
+      duration: Math.floor((currentChagingData.timeElapsed || 0) / 60),
       energyUsed: currentChagingData.energyUsed || 0,
       plan: currentPlan,
       amountDebited: currentSession?.amountDebited || currentPlan?.walletDeduction,
