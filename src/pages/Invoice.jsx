@@ -53,7 +53,7 @@ const Invoice = () => {
 
   const sendInvoiceEmail = async (data) => {
     
-    if (!EmailService.isAvailable) {
+    if (!EmailService.isAvailable()) {
       console.log('EmailJS not configured, skipping email')
       setEmailStatus({
         sending: false,
@@ -440,7 +440,7 @@ const Invoice = () => {
 
         <div className="row highlight-green">
           <span>Total Amount Paid</span>
-          <span>₹{NUmber(totalCost).toFixed(2)}</span>
+          <span>₹{Number(totalCost).toFixed(2)}</span>
         </div>
       </div>
 

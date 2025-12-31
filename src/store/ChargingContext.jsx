@@ -137,7 +137,7 @@ export const ChargingProvider = ({ children }) => {
         const newStatus = Notification.permission
         setNotificationStatus(newStatus)
         return { granted, status: newStatus }
-    })
+    }, [])
 
     const processPayment = useCallback(async () => {
 
