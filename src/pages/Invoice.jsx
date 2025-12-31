@@ -29,7 +29,7 @@ const Invoice = () => {
       const stored = CacheService.getSessionData()
       let parsed
       if (stored) {
-        parsed = JSON.parse(stored)
+        parsed = stored
         const completionData = parsed.completionData || parsed
 
         setSessionData(completionData)
