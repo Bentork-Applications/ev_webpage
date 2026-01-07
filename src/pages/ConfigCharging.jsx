@@ -4,7 +4,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import { useCharging } from '../store/ChargingContext'
 import "@material/web/slider/slider.js";
 import WalletIcon from "../assets/images/wallet.svg";
-import Logo from "../assets/images/Logo-1.png";
+import Logo from "../assets/images/logo-1.png";
 import StationImg from "../assets/images/station-img.png";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
@@ -458,10 +458,10 @@ md-slider {
 
         {/* ===== OVERLAY ===== */}
         {/* ===== OVERLAY ===== */}
-       <div
-  className={`drawer-overlay ${drawerOpen ? "show" : ""}`}
-  onClick={() => setDrawerOpen(false)}
-/>
+        <div
+          className={`drawer-overlay ${drawerOpen ? "show" : ""}`}
+          onClick={() => setDrawerOpen(false)}
+        />
 
 
         {/* ===== SIDE DRAWER ===== */}
@@ -489,23 +489,23 @@ md-slider {
               {sidebarConfig.menu.map((group, index) => (
                 <div key={index}>
                   {group.items.map((item, i) => (
-                   <div
-  className="item"
-  key={i}
-  onClick={() => {
-    setDrawerOpen(false);
+                    <div
+                      className="item"
+                      key={i}
+                      onClick={() => {
+                        setDrawerOpen(false);
 
-    if (item.label === "My Wallet") {
-      navigate("/dashboard");
-    } else if (item.label === "Terms & Conditions") {
-      navigate("/terms");
-    } else if (item.label === "Privacy Policy") {
-      navigate("/privacy");
-    } else if (item.label === "About Us") {
-      navigate("/about");
-    }
-  }}
->
+                        if (item.label === "My Wallet") {
+                          navigate("/dashboard");
+                        } else if (item.label === "Terms & Conditions") {
+                          navigate("/terms");
+                        } else if (item.label === "Privacy Policy") {
+                          navigate("/privacy");
+                        } else if (item.label === "About Us") {
+                          navigate("/about");
+                        }
+                      }}
+                    >
 
                       <span className="icon">{item.icon}</span>
                       <span>{item.label}</span>
