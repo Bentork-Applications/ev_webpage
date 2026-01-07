@@ -154,7 +154,7 @@ const ChargingSession = () => {
         {/* CIRCLE */}
         <div className="circle-container">
           <CircularProgress variant="determinate" value={100} size={220} thickness={4} className="circle-bg" />
-          <CircularProgress variant="determinate" value={24} size={220} thickness={4} className="circle-progress" />
+          <CircularProgress variant="determinate" value={chargingData.percentage} size={220} thickness={4} className="circle-progress" />
           <div className="circle-text">
             <Bolt className="bolt-icon" />
             <h1>+{Math.round(chargingData.percentage)}%</h1>
