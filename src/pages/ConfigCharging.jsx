@@ -1,10 +1,76 @@
-import React from "react";
-import { Outlet } from "react-router-dom";
+import React, { useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 
 import { useCharging } from '../store/ChargingContext'
 import "@material/web/slider/slider.js";
 import WalletIcon from "../assets/images/wallet.svg";
+import Logo from "../assets/images/Logo-1.png";
+import StationImg from "../assets/images/station-img.png";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+
+import { useAuth } from "../store/AuthContext";
+
+import "../assets/styles/global.css";
+
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import SettingsIcon from "@mui/icons-material/Settings";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import DownloadIcon from "@mui/icons-material/Download";
+import DescriptionIcon from "@mui/icons-material/Description";
+import PrivacyTipIcon from "@mui/icons-material/PrivacyTip";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+
+
+
+
+
+const sidebarConfig = {
+  user: {
+    name: "Ricard Joseph",
+    email: "richard@bentork.com",
+    avatar: <AccountCircleIcon fontSize="large" />
+  },
+  menu: [
+    {
+      section: "primary",
+      items: [
+        { label: "My Wallet", icon: <AccountBalanceWalletIcon /> },
+
+      ]
+    },
+    {
+      section: "support",
+      items: [
+        { label: "Help", icon: <HelpOutlineIcon /> },
+        { label: "Download App", icon: <DownloadIcon /> }
+      ]
+    },
+    {
+      section: "legal",
+      items: [
+        { label: "Terms & Conditions", icon: <DescriptionIcon />, path: "/terms" },
+        { label: "Privacy Policy", icon: <PrivacyTipIcon /> },
+        { label: "About Us", icon: <InfoOutlinedIcon /> }
+      ]
+    }
+  ]
+};
+
+
+
+
+
+
+
+
+
+
+
 const ConfigCharging = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     plans,
     selectedPlan,
@@ -16,6 +82,12 @@ const ConfigCharging = () => {
     updatePowerValue
   } = useCharging()
 
+  // 🔐 SAFE last used plan
+  const lastUsed = selectedPlan || plans[0];
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // 🔹 Quick plans only
+  const quickPlans = plans.filter(p => p.type === "QUICK");
 
   return (
     <>
@@ -24,470 +96,508 @@ const ConfigCharging = () => {
         margin: 0;
         padding: 0;
         height: 100%;
+        overflow-y: auto;
         font-family: Arial, sans-serif;
-     
       }
 
-       .page {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: 16px;
-  height: calc(100vh - 80px); /* ✅ FULL SCREEN */
-  box-sizing: border-box;
-  overflow: hidden; /* ✅ NO VERTICAL SCROLL */
+       /* ===== PAGE ===== */
+.config-page {
+  min-height: 100vh;
+  background: #303030;
+  color: #fff;
+  padding-top: 68px;
+  padding-bottom: 100px;
+  font-family: Roboto, sans-serif;
 }
 
-        .header {
-         display: flex;
-    alignItems: "center",
-    justifyContent: "space-between"
-     padding: 12px 18px;
-  flex-direction: row;
-
-
-         
-         
-        }
-
-.wallet-button {
-    display: flex;             
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-
-    padding: 6px 8px;
-    margin-left: 100px;
-
-    border-radius: 28px;        
-    border: 0.25px solid #ddd;  
-
-    background-color:#212121;  
-    opacity: 1;              
-
-    font-family: 'Roboto', sans-serif;
-    font-size: 10px;
-    font-weight: 500;
-
-    color: #fff;             
-    cursor: pointer;
-      height: 28px;           
-  width: 70px;            
-}
-/* ===== MAIN WRAPPER ===== */
-.top-section {
+/* ===== TOP BAR ===== */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 62px;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  padding: 18px;
+  background: #212121;
+
+  
+}
+
+.topbar-left {
+  display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* ===== LEFT ===== */
-.left-content {
-  width: 50%;
+.menu {
+  font-size: 40px;
+  font-weight: var(--font-weight-regular);
 }
 
-/* ===== RIGHT ===== */
-.right-content {
-  width: 50%;
-  display: flex;
-  justify-content: center;
-}
-        /* ===== TITLE ===== */
-.top-flex {
-  margin: 20px 0 18px;
+.top-logo {
+  height: 68px;
+  width: 128px;
 }
 
-.title {
-  font-size: 42px;
-  font-weight: 300;
-  line-height: 1.1;
-}
-
-.sub {
-  font-size: 18px;
-
-    font-weight: 300;
-}
-/* ===== STATION LAYOUT ===== */
-.station-wrapper {
+.wallet-pill {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-       /* ===== STATION CARD ===== */
-.station {
-  background: #212121;
-  color: #fff;
-  padding: 12px 6px;
-  border-radius: 12px;
- 
-}
-
-.station-title {
-  display: block;
-  font-size: 14px;
-  font-weight: 300;
-  margin-bottom: 10px;
-}
-  .station-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.station-list li {
-  font-size: 12px;
-  line-height: 1.6;
-  color: #fffefeff;
-  position: relative;
-  padding-left: 14px;
-  font-weight: 300;
-}
-
-.station-list li::before {
-  content: "•";
-  position: absolute;
-  left: 0;
-  color: #ffffff;
-}
-
-      
-
-        /* ===== IMAGE ===== */
-.station-img {
-  width: 166px;
-  height: 190px;
-
-
-}
-
-        .label {
-          font-weight: 400;
-          margin: 20px 0 8px;
-           font-size: 14px;
-        }
-
-        md-slider {
-          width: 100%;
-          --md-sys-color-primary: #00A000;
-          --md-sys-color-secondary: #d6efbf;
-          --md-slider-active-track-height: 20px;
-          --md-slider-inactive-track-height: 20px;
-          --md-slider-active-track-color: #5cc554ff;
-          --md-slider-inactive-track-color: #d6efbf;
-          --md-slider-handle-width: 4px;
-          --md-slider-handle-height: 40px;
-          --md-slider-handle-shape: 4px;
-          --md-slider-tick-color: #4b4b4b;
-          --md-slider-tick-active-color: #4caf50;
-          --md-slider-tick-size: 7px;
-            transition: all 0.3s ease;
-        }
-
-      .scroll {
-  display: flex;
-  gap: 14px;
-  overflow-x: auto;   /* ✅ only horizontal scroll */
-  overflow-y: hidden;
-  padding: 10px 0;
-  -webkit-overflow-scrolling: touch;
-}
-
-       .card {
-  min-width: 150px;
-  padding: 16px;
+  gap: 10px;
+  padding: 8px 12px;
+  background:#303030;
   border-radius: 16px;
-  border: 2px solid #e6e6e6;
-  background: #f5f5f5;
-  cursor: pointer;
-  position: relative;
-  flex-shrink: 0;
-  text-align: center;
-  transition: all 0.25s ease;
-}
-
-       .card.selected {
-  border: 2px solid #67B84B;
-  background: #fff;
-}
-
-       .popular {
-  position: absolute;
-  top: -12px;
-  left: 16px;
-  background: #67B84B;
+  border: none;
   color: #fff;
-  padding: 4px 12px;
-  border-radius: 14px;
   font-size: 12px;
-  font-weight: 500;
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-medium);
 }
-.card:hover {
-  transform: translateY(-3px);
+
+/* ===== MENU ICON ===== */
+.menu-icon {
+  font-size: 26px;
+  cursor: pointer;
 }
-        .card strong {
-          font-size: 18px;
-          font-weight: 400;
 
-        }
-
-        .time {
-          margin-top: 8px;
-          color: #333;
-        }
-
-        .price {
-          margin-top: 10px;
-          color: #67B84B;
-          font-weight: 700;
-          font-size: 18px;
-        }
-
-        .info {
-          text-align: center;
-          margin: 16px 0;
-          color: #67B84B;
-          font-size: 14px;
-        }
-
-        .pay-bar {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 90%;
-          max-width: 400px;
-          background: #111;
-          color: white;
-          padding: 16px;
-          text-align: center;
-          border-radius: 16px;
-          font-size: 18px;
-          font-weight: bold;
-          cursor: pointer;
-          z-index: 1000;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-          .title { font-size: 24px; }
-          .sub { font-size: 14px; }
-         
-          .card strong { font-size: 18px; }
-          .price { font-size: 18px; }
-        }
-
-
-
-       .dialog-backdrop {
+/* ===== OVERLAY ===== */
+.drawer-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.48);
-  display: flex;
-  justify-content: center; /* center horizontally */
-  align-items: center;     /* center vertically */
-  z-index: 999;
+  background: rgba(0,0,0,0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.3s;
+  z-index: 9;
 }
-       .dialog {
-  background: #fff;
+
+.drawer-overlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ===== DRAWER ===== */
+
+.drawer-box {
+  margin: 16px;
+  background: var(--color-matte-black);
+  border-radius: 22px;
+  overflow: hidden;
+}
+
+
+
+.side-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
   width: 90%;
-  max-width: 400px;
-  border-radius: 16px;
-  padding: 16px;
-  animation: scaleUp 0.3s ease;
-}
-        @keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-        .section{border-radius:16px;padding:14px;margin-bottom:12px;
-          border: 0.5px solid #0000004b;
+  max-width: 347px;
+  background: #212121;
+  transform: translateX(-100%);
+  transition: transform 0.35s ease;
+  z-index: 10;
+  border-radius: 0 28px 28px 0;
+  display: flex;
+  flex-direction: column;
+  padding-left: 0px;
+  gap: 18px;
 
-        }
-          .help{
-          font-size: 10px;
-          font-weight: 700;
-          margin-left: 30px;
-          color: #852221;
-  text-decoration: underline;
-  cursor: pointer
-
-          }
-  .help:hover {
-  opacity: 0.8;
 }
-  .row-1{font-size: 12px;
-          font-weight: 400;
-          justify-content:space-between;
-            border-radius: 12px;
-            color: #852221;
-          
-          }
-     
-.blue{background:#f1f8ff;border:1px solid #cce3ff}
-        .green{background:#eaffdb}
-        .Red{background:#F9DEDC}
-        .row{display:flex;justify-content:space-between;margin:10px 0;     font-size: 12px;
-          font-weight: 400;
-           margin-left: 35px;
-          
-        }
-          .dialog-title{
-          font-size: 16px;
-          font-weight: 400;
-            padding: 10px;
-          }
-            .dialog-sub{
-            font-size: 14px;
-          font-weight: 400;
-          }
-          .divider {
-  margin: 12px 0;
+
+.side-drawer hr {
   border: none;
-  border-top: 1px solid #ddd;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.23);
+  margin: 14px 0;
 }
-  .row.total {
+/* OPEN STATE */
+.side-drawer.open {
+  transform: translateX(0%);
+}
+
+
+/* ===== HEADER ===== */
+.drawer-header {
+  padding: 20px 8px 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-info {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-info p {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.close-icon {
+  cursor: pointer;
+}
+
+
+/* ===== MENU ===== */
+.drawer-menu .item {
+  padding: 8px 0;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--color-white);
+}
+
+.drawer-menu .item svg {
+  margin-top: 6px;
+  font-size: 18px;
+  opacity: 0.85;
+}
+
+.avatar svg {
+  border-radius: 25%;
+  font-size: 42px;
+  opacity: 0.9;
+}
+
+/* ===== LOGOUT ===== */
+.logout-btn {
+  position: absolute;
+  bottom: 0;
+  width: 88%;
+  margin: 18px 0px;
+  padding: 12px 10px;
+  background: #7b2c2c;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 12px;
+}
+
+
+/* ===== CHARGER CARD ===== */
+.charger-card {
+  margin: 8px;
+  background: #212121;
+  border-radius: 12px;
+  padding: 12px 18px;
+  display: flex;
+  justify-content: space-between;
+  height: fit-content;
+    
+}
+
+.charger-info h1 {
+  font-size: 24px;
+  font-weight: var(--font-weight-medium);
+}
+
+.charger-info h2 {
+  margin-top:-10px;
+  font-size: 18px;
+  font-weight: var(--font-weight-regular);
+}
+
+.charger-name {
+  margin-top: 40%;
+  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+}
+
+.charger-meta {
+  margin-top:2px;
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+}
+
+.charger-img {
+  height: 200px;
+  width: 130px;
+}
+
+/* ===== SLIDER ===== */
+.label {
+  font-weight: var(--font-weight-regular);
+  margin: 18px 0 6px;
+  font-size: 12px;
+  padding: 0px 16px;
+}
+
+md-slider {
+  width: 100%;
+  --md-sys-color-primary: var(--color-primary-container);
+  --md-sys-color-secondary: var(--color-on-primary-container);
+  --md-slider-active-track-height: 20px;
+  --md-slider-inactive-track-height: 20px;
+  --md-slider-active-track-color: var(--color-primary-container);
+  --md-slider-inactive-track-color: var(--color-on-primary-container);
+  --md-slider-handle-width: 4px;
+  --md-slider-handle-height: 40px;
+  --md-slider-handle-shape: 4px;
+  --md-slider-tick-color: var(--color-on-primary-container);
+  --md-slider-tick-active-color: var(--color-primary-container);
+  --md-slider-tick-size: 7px;
+  transition: all 0.3s ease;
+}
+
+
+/* ===== PLANS ===== */
+.plans-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 20px 16px 10px;
+}
+
+.last-used-pill {
+  padding: 6px 18px;
+  border: 1px solid var(--color-primary-container);
+  border-radius: 99px;
+  color: var(--color-primary-container);
+  font-size: 12px;
+  font-weight: var(--font-weight-regular);
+}
+
+.plans {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.plan {
+  background: #212121;
+  padding: 6px 28px;
+  border-radius: 28px;
+  border: 1px solid var(--color-on-primary-container);
+  display: flex;
+  height: 101px;
+  justify-content: space-between;
+  align-items: center;
+}
+.plan strong{
+  font-size: 24px;
+
+    font-weight: 600;
+}
+.plan span {
   font-size: 16px;
+  opacity: 0.7;
+    font-weight: 400;
 }
 
-        .pay-btn{background:#111;color:#fff;padding:16px;border-radius:16px;text-align:center;margin-top:12px;
-         font-size: 12px;
-          font-weight: 500;
-        }
+.plan .price {
+  color: #39E29B;
+  font-size: 18px;
+  font-weight: 700;
+}
 
-        .loading-skeleton {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.5s infinite;
-          border-radius: 16px;
-          min-width: 150px;
-          height: 100px;
-        }
-      
-      `}</style>
+.plan.active {
+  background: #2b2b2b;
+  outline: 1px solid #6db85b;
+}
 
-      <div className="page">
-        <div className="header">
-          <img
-            src="https://github.com/bentork5151/assets/blob/main/Logo/logo_transparent.png?raw=true"
-            alt="BENTORK Logo"
-            style={{ height: "55px", objectFit: "contain", width: "200px" }}
-          />
+/* ===== PAY BUTTON ===== */
+.pay-btn {
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 420px;
+  padding: 14px 24px;
+  background: #ffffffe0;
+  color: var(--color-matte-black);
+  border-radius: 18px;
+  font-size: 14px;
+  font-family: var(--font-primary);
+  font-weight: var(--font-weight-semibold);
+  border: none;
+}
+`}</style>
 
-          {/* walletbutton */}
-          <button className="wallet-button"
-    onClick={() => navigate("/dashboard")}>
-        <img src={WalletIcon} alt="Wallet" width="14" height="14" />
-    Wallet
-  </button>
+      <div className="config-page">
+
+        {/* ===== TOP BAR ===== */}
+        <div className="topbar">
+          <div className="topbar-left">
+            <MenuIcon
+              className="menu-icon"
+              onClick={() => setDrawerOpen(true)}
+            />
+
+            <img src={Logo} className="top-logo" />
+          </div>
+
+          <button
+            className="wallet-pill"
+            onClick={() => navigate("/dashboard")}
+          >
+            <img src={WalletIcon} alt="Wallet" />
+            ₹{Number(user?.walletBalance ?? 0).toLocaleString("en-IN")}
+          </button>
+
         </div>
 
-      <div className="top-section">
-  {/* LEFT SIDE */}
-  <div className="left-content">
-    <div className="top-flex">
-      <div className="title">Charging</div>
-      <div className="sub">Configuration</div>
-    </div>
 
-    <div className="station">
-      <div className="station-text">
-        <strong className="station-title">🔌 Station</strong>
-
-        <ul className="station-list">
-          <li>{chargerData?.name || "Bentork EV Station"}</li>
-          <li>Charger: {chargerData?.connectorType || "Type 2"}</li>
-          <li>Power: {chargerData?.chargerType === "DC" ? "DC" : "AC"}</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-  {/* RIGHT SIDE */}
-  <div className="right-content">
-    <img
-      className="station-img"
-      src="https://raw.githubusercontent.com/bentork5151/assets/19d62ecada81d6658614b7da7360f863b727105a/Illustrations/undraw_editable_y4ms.svg"
-      alt="EV Illustration"
-    />
-  </div>
-</div>
+        {/* ===== OVERLAY ===== */}
+        {/* ===== OVERLAY ===== */}
+       <div
+  className={`drawer-overlay ${drawerOpen ? "show" : ""}`}
+  onClick={() => setDrawerOpen(false)}
+/>
 
 
+        {/* ===== SIDE DRAWER ===== */}
+        <div className={`side-drawer ${drawerOpen ? "open" : ""}`}>
+          <div className="drawer-box" onClick={(e) => e.stopPropagation()}>
+            {/* USER HEADER */}
+            <div className="drawer-header">
+              <div className="user-info">
+                <div className="avatar">{sidebarConfig.user.avatar}</div>
+                <div>
+                  <strong className="text-semibold">{sidebarConfig.user.name}</strong>
+                  <p className="text-regular">{sidebarConfig.user.email}</p>
+                </div>
+              </div>
+              <CloseIcon
+                className="close-icon"
+                onClick={() => setDrawerOpen(false)}
+              />
+            </div>
 
+            <hr />
+
+            {/* MENU */}
+            <div className="drawer-menu">
+              {sidebarConfig.menu.map((group, index) => (
+                <div key={index}>
+                  {group.items.map((item, i) => (
+                   <div
+  className="item"
+  key={i}
+  onClick={() => {
+    setDrawerOpen(false);
+
+    if (item.label === "My Wallet") {
+      navigate("/dashboard");
+    } else if (item.label === "Terms & Conditions") {
+      navigate("/terms");
+    } else if (item.label === "Privacy Policy") {
+      navigate("/privacy");
+    } else if (item.label === "About Us") {
+      navigate("/about");
+    }
+  }}
+>
+
+                      <span className="icon">{item.icon}</span>
+                      <span>{item.label}</span>
+                    </div>
+                  ))}
+
+                  {index !== sidebarConfig.menu.length - 1 && <hr />}
+                </div>
+              ))}
+            </div>
+
+
+            {/* LOGOUT */}
+            <button className="logout-btn" onClick={() => console.log("Log Out")}>
+              Log Out
+            </button>
+          </div>
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+        {/* ===== CHARGER CARD ===== */}
+        <div className="charger-card">
+          <div className="charger-info">
+            <h1>Configure</h1>
+            <h2>Charger</h2>
+            <br />
+            <p className="charger-name">
+              {chargerData?.name || "Bentork Charger"}
+            </p>
+            <p className="charger-meta">
+              • Type: {chargerData?.connectorType || "CSS2"}<br />
+              • Power: {chargerData?.chargerType || "AC"}
+            </p>
+          </div>
+
+          <img src={StationImg} className="charger-img" />
+        </div>
+
+        {/* ===== SLIDER ===== */}
         <div className="label">Custom Power Range</div>
         <md-slider
           labeled
           min="0"
           max="1"
           step="0.1"
-          value={powerValue}  
-         onInput={(e) => updatePowerValue(Number(e.target.value))}
+          value={powerValue}
+          onInput={(e) => updatePowerValue(Number(e.target.value))}
         ></md-slider>
 
-        <div className="label">Based on Time</div>
-       <div className="scroll">
-        {plansLoading ? (
-          <>
-            <div className="loading-skeleton" />
-              <div className="loading-skeleton" />
-              <div className="loading-skeleton" />
-          </>
-        ):(
-          plans.map((plan) => (
+
+        {/* ===== PLANS ===== */}
+        <div className="plans-header">
+          <h3>Plans</h3>
+          <span className="last-used-pill">Last used</span>
+        </div>
+
+        <div className="plans">
+          {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`card ${selectedPlan?.id === plan.id ? "selected" : ""}`}
+              className={`plan ${selectedPlan?.id === plan.id ? "active" : ""}`}
               onClick={() => selectPlan(plan)}
             >
-              {selectedPlan?.id === plan.id && (
-                <div className="popular">Popular</div>
-              )}
-              <strong>{plan.planName}</strong>
-              <div className="time">{plan.durationMin} mins</div>
-              <div className="price">₹{plan.walletDeduction}</div>
+              <div>
+                <strong>{plan.planName}</strong>
+                <br />
+                <span>{plan.durationMin} mins</span>
+              </div>
+              <span className="price">₹{plan.walletDeduction}</span>
+
             </div>
-          ))
-        )}
+          ))}
         </div>
 
+        {/* ===== PAY BUTTON ===== */}
+        <button className="pay-btn" onClick={openReceipt}>
+          Pay ₹{selectedPlan?.walletDeduction || 0}
+        </button>
 
-        <div className="label">Based on Power</div>
-        <div className="scroll">
-          {plansLoading ? (
-          <>
-            <div className="loading-skeleton" />
-              <div className="loading-skeleton" />
-              <div className="loading-skeleton" />
-          </>
-          ):(
-          plans.map((plan) => (
-            <div
-              key={plan.id + "p"}
-              className={`card ${selectedPlan?.id === plan.id ? "selected" : ""}`}
-              onClick={() => selectPlan(plan)}
-            >
-              <strong>{plan.planName} kWh</strong>
-              <div className="time">{plan.durationMin} mins</div>
-              <div className="price">₹{plan.walletDeduction}</div>
-            </div>
-          ))
-        )} 
-        </div>
-
-        <div className="info">✓ Optimal charging rates for your vehicle</div>
+        <Outlet />
       </div>
-
-      {/* <div className="pay-bar" onClick={handleConfirm}>
-        Pay ₹{selectedPlan?.walletDeduction || "0.00"}
-      </div> */}
-
-      <div className="pay-bar" onClick={openReceipt}>
-        PAY ₹{selectedPlan?.walletDeduction || 0}
-      </div>
-
-      
-      <Outlet/>
     </>
-  );
+  )
 };
 
 export default ConfigCharging;

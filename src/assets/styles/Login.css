@@ -1,44 +1,88 @@
+@import url("./global.css");
+
 /* ===== RESET ===== */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: "Roboto", sans-serif;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #1f1f1f, #0e0e0e);
+  /* ❌ no scroll */
+  touch-action: manipulation;
+  /* ❌ no zoom */
 }
 
 
 /* --- Base Layout --- */
-.login-container {
-  background-color: #ffffff;
-
-  min-height: 100vh; 
-    display: flex;
+.login-container-dark {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
   flex-direction: column;
   align-items: center;
-  /* justify-content: center; */
-  padding: 00px 20px;
+  justify-content: flex-end;
   text-align: center;
+  color: #fff;
+  overflow: hidden;
   opacity: 0;
   transform: translateY(40px);
-  transition: all 0.8s ease-in-out;
-    position: relative;    /* ✅ needed for bottom image */
-  overflow-x: hidden;   
+  transition: var(--transition-slow);
 }
 
-.login-container.fade-in {
-  opacity: 1;
+/* 🔥 Bottom-to-top animation */
+.login-container-dark.slide-up {
   transform: translateY(0);
+  opacity: 1;
+}
+
+.screen-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: 420px;
+  padding-top: 40px;
+}
+
+/* ===== BRAND ===== */
+.brand-logo {
+  width: clamp(270px, 20vw, 130px);
+  margin-top: 42px;
+  gap: 10px;
+  padding: 18px 28px;
+}
+
+
+
+/* ===== HERO IMAGE ===== */
+.hero-image {
+  width: 95%;
+  max-width: 3902px;
+  margin-top: 128px;
+}
+
+/* ===== TEXT ===== */
+.welcome-text-dark {
+  font-size: clamp(36px, 0vw, 48px);
+  font-weight: var(--font-weight-bold);
+}
+
+.subtitle-dark {
+  font-size: 10px;
+  font-weight: var(--font-weight-regular);
 }
 
 /* --- Logo --- */
 .login-logo {
   width: clamp(190px, 20vw, 130px);
-  margin-top: clamp(20px, 8vh, 82px);
+  margin-top: 108;
   margin-bottom: 20px;
-   padding: 18px 28px;
-  animation: fadeUp 0.5s ease forwards;
+  padding: 18px 28px;
 
-    
+
 }
 
 /* --- Onboarding Image --- */
@@ -50,9 +94,8 @@ html, body {
 .onboarding-img {
   width: 100%;
   max-width: 380px;
-  margin: 00px  30px;
-  animation: fadeUp 0.5s ease forwards;
-   
+  margin: 00px 30px;
+
 }
 
 /* --- Text Section --- */
@@ -64,134 +107,113 @@ html, body {
   font-size: 28px;
   font-weight: 400;
   color: #000;
-  margin-top: 10px;
-    font-family: "Lexend", sans-serif;
-  animation: fadeUp 0.5s ease forwards;
+  margin-top: 20px;
+  font-family: "Lexend", sans-serif;
 }
 
 .subtitle-text {
   color: #333;
-    font-weight: 400;
+  font-weight: 400;
   font-size: 10px;
   margin-bottom: 25px;
-    font-family: "Roboto", sans-serif;
+  font-family: "Roboto", sans-serif;
 }
-.subtitle-text-1{
-   color:#000000;
-    font-weight: 400;
-      font-family: "Roboto", sans-serif;
+
+.subtitle-text-1 {
+  color: #000000;
+  font-weight: 400;
+  font-family: "Roboto", sans-serif;
   font-size: 12px;
-   opacity: 0.75; 
- margin-top: 20px;
+  opacity: 0.75;
+  margin-top: 20px;
 
 
 }
 
-/* --- Google Button --- */
-.google-btn {
+/* ---- Google Button ---- */
+/* ===== BUTTON ===== */
+.google-btn-dark {
+  margin-top: 24px;
+  width: 90%;
+  max-width: 360px;
+  height: 56px;
+  background: rgba(48, 48, 48, 0.75);
+  color: #ffffff;
+  border-radius: 28px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #fff;
-  color: #000;
-  border: none;
-  border-radius: 12px;
- border: 0.25px solid #ccc;
-  padding: 10px;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  width: 90%;
-  max-width: 350px;
-  margin-left: 20px;
-  height: 46px;
   gap: 10px;
+  padding: 10px;
 }
 
-.google-btn:hover {
-  background-color: #f0f0f0;
+.google-btn-dark:hover {
   transform: scale(1.02);
+  background: #f2f2f2;
 }
 
 .google-icon {
-  width: 24.45px;
-  height: 24.45px;
-  margin-right: 10px;
+  width: 22px;
+  height: 22px;
 }
 
-/* --- Animations --- */
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.card-2{
-    background:#F1F1F1;
-          padding:18px;
-          border-radius:28px;
-           border:1px solid #eee;
-           color: rgb(255, 255, 255);
+.card-2 {
+  background: #F1F1F1;
+  padding: 18px;
+  border-radius: 28px;
+  border: 1px solid #eee;
+  color: rgb(255, 255, 255);
+  align-items: center;
+
 
 
 
 }
-.fotter-text{
-      font-weight: 400;
-  font-size: 10px;
-      margin-top: auto;
- padding: 28px 10px;
- gap: 10px;
-  opacity: 0.75; 
-}
 
-@keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+
 .bottom-image {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-       /* optional */
+  /* optional */
   z-index: 0;
   pointer-events: none;
 }
+
 .top-right-image {
   position: absolute;
   top: 0;
   right: 0;
-  width: 180px;        /* adjust size */
-       /* optional */
-  z-index: 1;          /* keep behind content */
-  pointer-events: none; /* avoid click issues */
-    opacity: 0.5;
+  width: 150px;
+  /* adjust size */
+  /* optional */
+  z-index: 1;
+  /* keep behind content */
+  pointer-events: none;
+  /* avoid click issues */
+  opacity: 0.5;
 }
 
-/* --- Responsive --- */
-@media (max-width: 700px) {
-  .welcome-text {
-    font-size: 1.8rem;
-  }
-  .google-btn {
-    font-size: 0.95rem;
-  }
-    .login-logo {
-    margin-top: 20px;
-  }
+.sheet-divider {
+  height: 1px;
+  background: #ddd;
+  margin: 16px 0;
+}
 
-  .onboarding-img {
-    max-width: 260px;
+/* ===== FOOTER ===== */
+.footer-dark {
+  font-size: 8px;
+  opacity: 0.6;
+  padding: 20px 0;
+}
+
+/* ===== SMALL DEVICES ===== */
+@media (max-height: 700px) {
+  .hero-image {
+    max-width: 280px;
   }
 }
