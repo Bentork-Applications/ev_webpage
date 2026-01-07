@@ -154,7 +154,7 @@ const ChargingSession = () => {
         {/* CIRCLE */}
         <div className="circle-container">
           <CircularProgress variant="determinate" value={100} size={220} thickness={4} className="circle-bg" />
-          <CircularProgress variant="determinate" value={chargingData.percentage} size={220} thickness={4} className="circle-progress" />
+          <CircularProgress variant="determinate" value={24} size={220} thickness={4} className="circle-progress" />
           <div className="circle-text">
             <Bolt className="bolt-icon" />
             <h1>+{Math.round(chargingData.percentage)}%</h1>
@@ -442,51 +442,38 @@ const ChargingSession = () => {
 /* CIRCLE */
 .circle-container {
   position: relative;
-  margin: 0px auto;
-  overflow: hidden;
+  margin: 20px auto;
   display: flex;
   justify-content: center;
   align-items: center;
   width: 100%;
   min-height: 220px;
-  flex-wrap: wrap;
 }
 
 .circle-bg {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 50%;
+  position: absolute;
   color: #2e2e2e !important;
-}
-.circle-bg .MuiCircularProgress-circle {
-  stroke-linecap: round;
+  z-index: 1;
 }
 
 .circle-progress {
   position: absolute;
-  left: 0;
-  top: 0;
-  min-width: 100px;
-  min-height: 100px;
-  width: 150px;
-  height: 150px;
-  color: var(--color-white);
+  color: #ffffff;
+  z-index: 2;
 }
 
 .circle-progress .MuiCircularProgress-circle {
   stroke-linecap: round;
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.22, 1, 0.36, 1);
 }
-
 
 .circle-text {
   position: absolute;
-  inset: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  z-index: 3;
 }
 
 .bolt-icon {
