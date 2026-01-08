@@ -8,7 +8,7 @@ import Logo from "../assets/images/logo-1.png";
 import StationImg from "../assets/images/station-img.png";
 import MenuIcon from "@mui/icons-material/Menu";
 import CloseIcon from "@mui/icons-material/Close";
-
+import DownloadAppImg from "../assets/images/downloadPage.png";
 import { useAuth } from "../store/AuthContext";
 
 import "../assets/styles/global.css";
@@ -79,13 +79,14 @@ const ConfigCharging = () => {
     chargerData,
     openReceipt,
     selectPlan,
-    updatePowerValue
+    updatePowerValue,
+    error
   } = useCharging()
 
   // 🔐 SAFE last used plan
   const lastUsed = selectedPlan || plans[0];
   const [drawerOpen, setDrawerOpen] = useState(false);
-
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   // 🔹 Quick plans only
   const quickPlans = plans.filter(p => p.type === "QUICK");
 
@@ -431,6 +432,47 @@ md-slider {
   border: none;
   z-index: 99;
 }
+
+.error-banner {
+  background-color: #ffebee;
+  color: #d32f2f;
+  padding: 12px 16px;
+  margin: 10px 16px;
+  border-radius: 8px;
+  border: 1px solid #ffcdd2;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 10px;
+  margin-top: 8px;
+  text-transform: capitalize;
+  width: fit-content;
+  letter-spacing: 0.5px;
+}
+
+.status-available {
+color: var(--color-on-primary-container);
+  background-color: var(--color-primary-container);
+}
+
+.status-busy {
+  color: white;
+  background-color: #ef6c00;
+}
+
+.status-offline {
+  color: white;
+  background-color: #c62828;
+}
 `}</style>
 
       <div className="config-page">
@@ -514,10 +556,15 @@ md-slider {
                           navigate("/privacy");
                         } else if (item.label === "About Us") {
                           navigate("/about");
+                        } else if (item.label === "Download App") {
+                          setDownloadDialogOpen(true); // open dialog
+                        } else if (item.label === "Help") {
+                          window.open("https://bentork.com/contacts/",); // open in new tab
+                          // OR use this to open in same tab:
+                          // window.location.href = "https://bentork.com/contacts/";
                         }
                       }}
                     >
-
                       <span className="icon">{item.icon}</span>
                       <span>{item.label}</span>
                     </div>
@@ -559,6 +606,23 @@ md-slider {
               • Type: {chargerData?.connectorType || "CSS2"}<br />
               • Power: {chargerData?.chargerType || "AC"}
             </p>
+
+
+
+
+            <div
+              className={`status-pill ${!chargerData?.status
+                ? 'status-offline'
+                : chargerData.status.toLowerCase() === 'available'
+                  ? 'status-available'
+                  : chargerData.status.toLowerCase() === 'busy'
+                    ? 'status-busy'
+                    : 'status-offline'
+                }`}
+            >
+              {chargerData?.status || 'Offline'}
+            </div>
+
           </div>
 
           <img src={StationImg} className="charger-img" />
@@ -606,6 +670,69 @@ md-slider {
           {/* Pay ₹{selectedPlan?.walletDeduction || 0} */}
         </button>
 
+        {/* Download Dialog */}
+        {downloadDialogOpen && (
+          <div
+            style={{
+              position: "fixed",
+              inset: 0,
+              background: "rgba(0,0,0,0.6)",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              zIndex: 999,
+            }}
+            onClick={() => setDownloadDialogOpen(false)}
+          >
+            <div
+              style={{
+                background: "#212121",
+                padding: "20px",
+                borderRadius: "16px",
+                width: "90%",
+                maxWidth: "400px",
+                position: "relative",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <CloseIcon
+                style={{
+                  position: "absolute",
+                  top: "12px",
+                  right: "12px",
+                  cursor: "pointer",
+                  color: "#fff",
+                }}
+                onClick={() => setDownloadDialogOpen(false)}
+              />
+
+              {/* Image */}
+              <div style={{ textAlign: "center", margin: "20px 0" }}>
+                <img
+                  src={DownloadAppImg}
+                  alt="Coming Soon"
+                  style={{ width: "100%", borderRadius: "8px" }}
+                />
+              </div>
+
+              {/* Text */}
+              <h2
+                style={{
+                  textAlign: "center",
+                  marginBottom: "8px",
+                  color: "#fff",
+                }}
+              >
+                Coming Soon
+              </h2>
+              <p style={{ textAlign: "center", color: "#aaa" }}>Stay Tuned!</p>
+            </div>
+          </div>
+        )}
+
+
+
         <Outlet />
       </div>
     </>
@@ -613,3 +740,6 @@ md-slider {
 };
 
 export default ConfigCharging;
+
+
+
