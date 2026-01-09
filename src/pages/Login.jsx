@@ -75,7 +75,11 @@ const Login = () => {
 
         window.history.replaceState({}, document.title, window.location.pathname)
 
-        navigate('/config-charging')
+        if (ocppIdFromUrl) {
+          navigate(`/config-charging/${ocppIdFromUrl}`)
+        } else {
+          navigate('/config-charging')
+        }
 
       } catch (error) {
         setError(logError('AUTH_GOOGLE_FAILED', error))

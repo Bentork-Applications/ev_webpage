@@ -188,10 +188,12 @@ export const ChargingProvider = ({ children }) => {
                 API_CONFIG.ENDPOINTS.GET_CHARGER(chargerData?.ocppId))
             console.info('Charger Data:', chargerResponse)
             updateChargerData(chargerResponse)
-            console.log('ischargerunavailable: ', isChargerUnavailable)
-            console.log('charger data 2: ', chargerData)
 
-            if (isChargerUnavailable) {
+            // Check status directly from fresh response
+            const currentStatus = chargerResponse?.status?.toLowerCase() || 'offline'
+            const isUnavailable = currentStatus === 'offline' || currentStatus === 'busy'
+
+            if (isUnavailable) {
                 setError(logError('CHARGER_UNAVAILABLE'))
                 return { success: false }
             }
