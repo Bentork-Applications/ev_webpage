@@ -14,7 +14,7 @@ import Invoice from './pages/Invoice'
 import ThankYou from './pages/ThankYou'
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy.jsx";
-import About from "./pages/About.jsx";
+import About from "./pages/about.jsx";
 
 EmailService.init()
 
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
   { path: '/login/:ocppId', element: <Login /> },
   { path: '/terms', element: <Terms /> },
   { path: '/privacy', element: <Privacy /> },
-  { path: '/about', element: <About /> },
+  { path: '/about', element: <about /> },
   {
     element: <AuthGuard />,
     children: [
