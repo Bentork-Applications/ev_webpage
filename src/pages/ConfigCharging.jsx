@@ -71,7 +71,7 @@ const sidebarConfig = {
 
 
 
-import About from "./About";
+import About from "./about";
 
 const ConfigCharging = () => {
   const navigate = useNavigate();

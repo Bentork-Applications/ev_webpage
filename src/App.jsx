@@ -14,7 +14,7 @@ import Invoice from './pages/Invoice'
 import ThankYou from './pages/ThankYou'
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy.jsx";
-import About from "./pages/about.jsx";
+import About from "./pages/About.jsx";
 
 EmailService.init()
 
