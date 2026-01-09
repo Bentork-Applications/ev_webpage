@@ -20,6 +20,7 @@ import Logo from "../assets/images/logo-1.png";
 import LoginImg from "../assets/images/car.png";
 import BottomImg from "../assets/images/BottomImg.png";
 import "../assets/styles/Login.css";
+import { logError } from "../config/errors.config";
 import TopRightBg from "../assets/images/tr.png";
 
 const Login = () => {
@@ -77,8 +78,7 @@ const Login = () => {
         navigate('/config-charging')
 
       } catch (error) {
-        console.error('OAuth callback error:', error)
-        setError('Failed to process login')
+        setError(logError('AUTH_GOOGLE_FAILED', error))
         setLoading(false)
       }
     }

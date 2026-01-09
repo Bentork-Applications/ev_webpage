@@ -139,6 +139,7 @@ import { useAuth } from "../store/AuthContext";
 import "@material/web/progress/linear-progress.js"; // ✅ Material Web progress
 import logo from "../assets/images/logo-1.png";
 import "../assets/styles/SplashScreen.css";
+import { logError } from "../config/errors.config";
 
 const SplashScreen = () => {
   const navigate = useNavigate();
@@ -164,10 +165,15 @@ const SplashScreen = () => {
       }
 
       setStatus("Validating credentials...");
-      const loginResult = await AuthService.login(cacheUser.email);
+      // const loginResult = await AuthService.login(cacheUser.email);
 
-      if (!loginResult?.success) {
-        navigate(`/login${ocppId ? `/${ocppId}` : ""}`);
+      // if (!loginResult?.success) {
+      //   navigate(`/login${ocppId ? `/${ocppId}` : ""}`);
+      //   return;
+      // }
+      const userResult = await AuthService.userByEmail(cacheUser.email); // Fetches user details using the existing valid token
+      if (!userResult.success) {
+        navigate('/login');
         return;
       }
 
@@ -197,7 +203,7 @@ const SplashScreen = () => {
 
       navigate("/config-charging");
     } catch (error) {
-      console.error("Splash error:", error);
+      logError('SESSION_INIT_ERROR', error)
       setTimeout(() => {
         navigate(`/login${ocppId ? `/${ocppId}` : ""}`);
       }, 1000);

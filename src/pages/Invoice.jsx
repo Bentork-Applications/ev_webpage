@@ -7,6 +7,7 @@ import CacheService from "../services/cache.service";
 import EmailService from "../services/email.service"
 import SessionService from "../services/session.service"
 import Logo from "../assets/images/logo-1.png";
+import { logError } from "../config/errors.config";
 const Invoice = () => {
   const navigate = useNavigate();
   const { user, chargerData } = useAuth();
@@ -64,71 +65,170 @@ const Invoice = () => {
     }
   }
 
-  const sendInvoiceEmail = async (data) => {
+  // const sendInvoiceEmail = async (data) => {
 
+  //   if (!EmailService.isAvailable()) {
+  //     console.log('EmailJS not configured, skipping email')
+  //     setEmailStatus({
+  //       sending: false,
+  //       sent: false,
+  //       error: 'Email service not configured'
+  //     })
+  //     return
+  //   }
+
+  //   if (!user.email) {
+  //     console.log('No user email available')
+  //     setEmailStatus({
+  //       sending: false,
+  //       sent: false,
+  //       error: 'User email not available'
+  //     })
+  //     return
+  //   }
+
+  //   setEmailStatus({ sending: true, sent: false, error: null })
+
+  //   try {
+  //     const invoiceData = {
+  //       userName: user?.name || 'Customer',
+  //       userEmail: user?.email,
+  //       sessionId: data.sessionId,
+  //       receiptId: data.receiptId || data.transactionId,
+  //       stationName: data.stationName || chargerData?.stationName || chargerData?.name || 'N/A',
+  //       chargerType: data.chargerType || chargerData?.chargerType || 'N/A',
+  //       duration: data.duration || 0,
+  //       energyUsed: data.energyUsed || 0,
+  //       rate: data.rate || data.plan?.rate || 0,
+  //       totalCost: data.finalCost || data.amountDebited || 0,
+  //       paymentMethod: data.paymentMethod || 'Wallet',
+  //       transactionId: data.transactionId || data.receiptId || data.sessionId,
+  //       completedAt: data.endTime || new Date().toISOString()
+  //     }
+
+  //     console.log('Invoice data: ', invoiceData)
+
+  //     const result = await EmailService.sendInvoiceEmail(invoiceData)
+
+  //     if (result.success) {
+  //       setEmailStatus({ sending: false, sent: true, error: null })
+  //       // setSnackbar({
+  //       //   open: true,
+  //       //   message: `Invoice sent to ${user?.email}`,
+  //       //   severity: 'success'
+  //       // })
+  //     } else {
+  //       throw new Error(result.error)
+  //     }
+
+  //   } catch (error) {
+  //     console.error("Failed to send invoice email:", error)
+  //     setEmailStatus({
+  //       sending: false,
+  //       sent: false,
+  //       error: error.message || 'Failed to send email'
+  //     })
+  //   }
+  // }
+  const sendInvoice = async () => {
     if (!EmailService.isAvailable()) {
-      console.log('EmailJS not configured, skipping email')
+      console.log("EmailJS not configured, skipping email");
       setEmailStatus({
         sending: false,
         sent: false,
-        error: 'Email service not configured'
-      })
-      return
+        error: "Email service not configured",
+      });
+      return;
     }
 
-    if (!user.email) {
-      console.log('No user email available')
+    if (!user?.email) {
+      console.log("No user email available");
       setEmailStatus({
         sending: false,
         sent: false,
-        error: 'User email not available'
-      })
-      return
+        error: "User email not available",
+      });
+      return;
     }
 
-    setEmailStatus({ sending: true, sent: false, error: null })
+    if (!sessionData) {
+      setEmailStatus({
+        sending: false,
+        sent: false,
+        error: "Session data not available",
+      });
+      return;
+    }
+
+    setEmailStatus({ sending: true, sent: false, error: null });
 
     try {
       const invoiceData = {
-        userName: user?.name || 'Customer',
-        userEmail: user?.email,
-        sessionId: data.sessionId,
-        receiptId: data.receiptId || data.transactionId,
-        stationName: data.stationName || chargerData?.stationName || chargerData?.name || 'N/A',
-        chargerType: data.chargerType || chargerData?.chargerType || 'N/A',
-        duration: data.duration || 0,
-        energyUsed: data.energyUsed || 0,
-        rate: data.rate || data.plan?.rate || 0,
-        totalCost: data.finalCost || data.amountDebited || 0,
-        paymentMethod: data.paymentMethod || 'Wallet',
-        transactionId: data.transactionId || data.receiptId || data.sessionId,
-        completedAt: data.endTime || new Date().toISOString()
+        // USER
+        userEmail: user.email,
+        userName: user.name || "Customer",
+
+        // SESSION
+        sessionId: sessionData.sessionId,
+        receiptId:
+          sessionData.receiptId ||
+          sessionData.transactionId ||
+          sessionData.sessionId,
+
+        completedAt: sessionData.endTime || new Date().toISOString(),
+
+        // CHARGING
+        stationName:
+          sessionData.stationName ||
+          chargerData?.stationName ||
+          chargerData?.name ||
+          "Bentork Station",
+
+        chargerType:
+          sessionData.chargerType ||
+          chargerData?.chargerType ||
+          "N/A",
+
+        duration: sessionData.duration || 0,
+        energyUsed: sessionData.energyUsed || 0,
+        rate: sessionData.rate || sessionData.plan?.rate || 0,
+
+        // PAYMENT
+        paymentMethod: sessionData.paymentMethod || "Wallet",
+        transactionId:
+          sessionData.transactionId ||
+          sessionData.receiptId ||
+          sessionData.sessionId,
+
+        totalCost:
+          sessionData.finalCost ||
+          sessionData.amountDebited ||
+          (sessionData.energyUsed || 0) *
+          (sessionData.rate || 0),
+      };
+
+      console.log("Invoice data:", invoiceData);
+
+      const result = await EmailService.sendInvoiceEmail(invoiceData);
+
+      if (!result.success) {
+        throw new Error(result.error);
       }
-
-      console.log('Invoice data: ', invoiceData)
-
-      const result = await EmailService.sendInvoiceEmail(invoiceData)
-
-      if (result.success) {
-        setEmailStatus({ sending: false, sent: true, error: null })
-        // setSnackbar({
-        //   open: true,
-        //   message: `Invoice sent to ${user?.email}`,
-        //   severity: 'success'
-        // })
-      } else {
-        throw new Error(result.error)
-      }
-
+      setEmailStatus({ sending: false, sent: true, error: null });
     } catch (error) {
-      console.error("Failed to send invoice email:", error)
+      console.error("Failed to send invoice email:", error);
       setEmailStatus({
         sending: false,
         sent: false,
-        error: error.message || 'Failed to send email'
-      })
+        error: logError('INVOICE_SEND_FAIL', error),
+      });
     }
-  }
+  };
+
+
+
+
+
 
   const handleResendEmail = async () => {
     if (sessionData && user?.email) {
@@ -139,6 +239,13 @@ const Invoice = () => {
   const handleDone = () => {
     navigate("/thank-you")
   }
+
+
+
+
+
+
+
 
   if (isLoading) {
     return (
@@ -228,14 +335,14 @@ const Invoice = () => {
 
 body {
   margin: 0;
-  background: var(--color-matte-black);
+  background: #212121;
   font-family: "Inter", "Roboto", sans-serif;
-  overflow-y: scroll;
 }
 
 /* ================== PAGE ================== */
 .invoice-page {
     min-height: 100vh;
+  background: radial-gradient(circle at top, #1e1e1e, #121212);
   padding-bottom: 120px;
   color: #fff;
 }
@@ -260,22 +367,25 @@ body {
 
 /* SESSION COMPLETED PILL */
 .session-pill {
-  padding: 4px 12px;
+  padding: 2px 8px;
   border-radius: 20px;
+
   background: #303030;
   color: #ffffff;
+
   font-size: 10px;
+  font-weight: 400;
   white-space: nowrap;
 }
 
 
 /* ================== HEADER ================== */
 .invoice-header {
-  background: var(--color-matte-black);
+   background: linear-gradient(180deg, #1c1c1c 0%, #141414 100%);
   padding: 42px 28px;
   text-align: center;
   height: 131px;
-  width: 100%;
+   width: 404px;
   border-bottom-left-radius: 32px;
   border-bottom-right-radius: 32px;
 
@@ -349,36 +459,42 @@ body {
 
 /* ================== CARD ================== */
 .card {
-  margin: 0px 16px;
-  height: 286;
+  margin: 8px;
+   
+      height: 286;
   border-radius: 18px;
-  background: #212121;
-  gap: 10px;
+  background: #212121
+  );
+   gap: 10px;
   backdrop-filter: blur(10px);
   box-shadow: 0 0 0 1px #55555580;
   overflow: hidden;
 }
 
 .card h2 {
-  padding: 18px 16px;
-  font-size: 16px;
+  padding: 10px 8px;
+  
+  font-size: 18px;
   font-weight: 600;
   color: #fff;
 }
   .card-1 {
-  margin: 18px 16px;
-  height: fit-content;
+  margin: 8px;
+   
+      height: 188px;
   border-radius: 18px;
-  background: #212121;
-  gap: 10px;
+  background: #212121
+  );
+   gap: 10px;
   backdrop-filter: blur(10px);
   box-shadow: 0 0 0 1px #55555580;
   overflow: hidden;
 }
 
 .card-1 h2 {
-  padding: 18px 16px;
-  font-size: 16px;
+  padding: 10px 8px;
+  
+  font-size: 18px;
   font-weight: 600;
   color: #fff;
 }
@@ -394,16 +510,17 @@ body {
 }
 
 .row span:first-child {
-  color: #ffffffff;
+  color: #FFFFFF80;
 }
 
 .row span:last-child {
-  font-weight: 100;
+ 
+  font-weight: 400;
 }
 
 /* ================== HIGHLIGHTS ================== */
 .highlight {
-  background: var(--color-card-bg);
+  background: #303030;
   font-weight: 700;
    color: #FFFFFF;
 }
@@ -419,7 +536,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: var(--color-primary-container);
+  color: #2cf947ff;
   font-weight: 600;
 }
 
