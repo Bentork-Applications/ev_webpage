@@ -25,7 +25,7 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import WarningIcon from "@mui/icons-material/Warning";
 import ErrorIcon from "@mui/icons-material/Error";
 
-import About from "./About";
+import About from "./about";
 import AuthService from "../services/auth.service"; // Import service
 
 const sidebarConfig = {
