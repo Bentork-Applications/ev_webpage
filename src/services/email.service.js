@@ -10,7 +10,7 @@ class EmailService {
 
     const publicKey = API_CONFIG.EMAIL_CONFIG?.PUBLIC_KEY;
     if (!publicKey) {
-      console.warn("❌ EmailJS Public Key सापडली नाही");
+      console.warn("❌ EmailJS Public Key not found");
       return;
     }
 
@@ -60,8 +60,7 @@ class EmailService {
     }
 
     const templateParams = {
-      to_email: invoiceData.userEmail, // 🔥 EmailJS मध्ये आवश्यक
-      user_name: invoiceData.userName || "Customer",
+      to_email: invoiceData.userEmail, // 
 
       session_id: invoiceData.sessionId || "N/A",
       receipt_id: invoiceData.receiptId || "N/A",
@@ -82,7 +81,8 @@ class EmailService {
       const res = await emailjs.send(
         API_CONFIG.EMAIL_CONFIG.SERVICE_ID,
         API_CONFIG.EMAIL_CONFIG.TEMPLATE_ID,
-        templateParams
+        templateParams,
+          API_CONFIG.EMAIL_CONFIG.PUBLIC_KEY 
       );
 
       console.log("✅ Email Sent:", res.text);
